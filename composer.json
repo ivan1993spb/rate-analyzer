@@ -8,6 +8,11 @@
             "email": "iv.pushk@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "CoinCorp\\": "src/CoinCorp/"
+        }
+    },
     "require": {
         "illuminate/database": "^5.4"
     }

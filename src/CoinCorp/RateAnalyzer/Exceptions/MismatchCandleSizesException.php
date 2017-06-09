@@ -5,11 +5,11 @@ namespace CoinCorp\RateAnalyzer\Exceptions;
 use Exception;
 
 /**
- * Class PairSourceFileNotFoundException
+ * Class MismatchCandleSizesException
  *
  * @package CoinCorp\RateAnalyzer\Exceptions
  */
-class PairSourceFileNotFoundException extends Exception
+class MismatchCandleSizesException extends Exception
 {
 
 }
