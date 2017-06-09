@@ -1,0 +1,14 @@
+{
+    "name": "coincorp/rate-analyzer",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ivan Pushkin",
+            "email": "iv.pushk@gmail.com"
+        }
+    ],
+    "require": {
+        "illuminate/database": "^5.4"
+    }
+}
