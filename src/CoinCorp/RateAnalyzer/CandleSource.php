@@ -78,16 +78,6 @@ class CandleSource implements CandleEmitterInterface
                 array_push($candles, Candle::fromArray($this->name, (array)$raw));
             });
 
-        if (count($candles) > 1) {
-            // Verify candle sequence
-            for ($i = 0; $i < count($candles) - 1; $i++) {
-                if ($candles[$i+1]->start->getTimestamp()-$candles[$i]->start->getTimestamp() != $this->getCandleSize()) {
-                    // Если есть разрыв в последовательности свечей, отрезаем хвост и возвращает только то, что есть
-                    return array_slice($candles, 0, $i+1);
-                }
-            }
-        }
-
         return $candles;
     }
 
