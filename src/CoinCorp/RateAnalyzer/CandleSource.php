@@ -14,17 +14,19 @@ use PDO;
  */
 class CandleSource implements CandleEmitterInterface
 {
-    const CANDLE_SIZE_MINUTES = 1;
+    const MIN_CANDLE_SIZE = 60;
+
+    const CHUNK_SIZE = 1000;
 
     /**
      * @var string
      */
-    public $name;
+    private $name;
 
     /**
      * @var string
      */
-    public $path;
+    private $path;
 
     /**
      * @var \Illuminate\Database\Connection
@@ -37,14 +39,26 @@ class CandleSource implements CandleEmitterInterface
     private $table;
 
     /**
+     * @var \DateTime
+     */
+    private $from;
+
+    /**
+     * @var \DateTime
+     */
+    private $to;
+
+    /**
      * CandleSource constructor.
      *
-     * @param string $name
-     * @param string $path
-     * @param string $table
+     * @param string    $name
+     * @param string    $path
+     * @param string    $table
+     * @param \DateTime $from
+     * @param \DateTime $to
      * @throws CandleSourceFileNotFoundException
      */
-    public function __construct($name, $path, $table)
+    public function __construct($name, $path, $table, DateTime $from, DateTime $to)
     {
         $this->name = $name;
         $this->path = $path;
@@ -53,6 +67,8 @@ class CandleSource implements CandleEmitterInterface
         }
         $this->connection = new Connection(new PDO('sqlite:'.$path));
         $this->table = $table;
+        $this->from = $from;
+        $this->to = $to;
     }
 
     public function __destruct()
@@ -61,24 +77,40 @@ class CandleSource implements CandleEmitterInterface
     }
 
     /**
-     * @param \DateTime $from
-     * @param \DateTime $to
-     * @return \CoinCorp\RateAnalyzer\Candle[]
+     * @return \Generator|\CoinCorp\RateAnalyzer\Candle[]
      */
-    public function getCandles(DateTime $from, DateTime $to)
+    public function candles()
     {
-        /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
-        $candles = [];
+        $offset = 0;
+        $limit = self::CHUNK_SIZE;
 
-        $this->connection
-            ->table($this->table)
-            ->whereBetween('start', [$from->getTimestamp(), $to->getTimestamp()])
-            ->orderBy('start')
-            ->each(function($raw) use (&$candles) {
+        while (true) {
+            /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
+            $candles = [];
+
+            $callback = function ($raw) use (&$candles) {
                 array_push($candles, Candle::fromArray($this->name, (array)$raw));
-            });
+            };
 
-        return $candles;
+            $this->connection
+                ->table($this->table)
+                ->whereBetween('start', [$this->from->getTimestamp(), $this->to->getTimestamp()])
+                ->orderBy('start')
+                ->offset($offset)
+                ->limit($limit)
+                ->get()
+                ->each($callback);
+
+            if (count($candles) > 0) {
+                foreach ($candles as $candle) {
+                    yield $candle;
+                }
+
+                $offset += $limit;
+            } else {
+                break;
+            }
+        }
     }
 
     /**
@@ -88,6 +120,6 @@ class CandleSource implements CandleEmitterInterface
      */
     public function getCandleSize()
     {
-        return self::CANDLE_SIZE_MINUTES * 60;
+        return self::MIN_CANDLE_SIZE;
     }
 }

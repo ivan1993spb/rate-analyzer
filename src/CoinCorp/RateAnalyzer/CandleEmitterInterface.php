@@ -2,8 +2,6 @@
 
 namespace CoinCorp\RateAnalyzer;
 
-use DateTime;
-
 /**
  * Interface CandleEmitterInterface
  *
@@ -12,11 +10,9 @@ use DateTime;
 interface CandleEmitterInterface
 {
     /**
-     * @param \DateTime $from
-     * @param \DateTime $to
-     * @return \CoinCorp\RateAnalyzer\Candle[]
+     * @return \Generator|\CoinCorp\RateAnalyzer\Candle[]
      */
-    public function getCandles(DateTime $from, DateTime $to);
+    public function candles();
 
     /**
      * Returns candle size in seconds

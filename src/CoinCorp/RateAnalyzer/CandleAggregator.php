@@ -3,7 +3,7 @@
 namespace CoinCorp\RateAnalyzer;
 
 use CoinCorp\RateAnalyzer\Exceptions\MismatchCandleSizesException;
-use DateTime;
+use Monolog\Logger;
 
 /**
  * Class Aggregator
@@ -16,6 +16,21 @@ class CandleAggregator
      * @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[]
      */
     private $candleEmitters = [];
+
+    /**
+     * @var \Monolog\Logger
+     */
+    private $log;
+
+    /**
+     * CandleAggregator constructor.
+     *
+     * @param \Monolog\Logger $log
+     */
+    public function __construct(Logger $log)
+    {
+        $this->log = $log;
+    }
 
     /**
      * @param \CoinCorp\RateAnalyzer\CandleEmitterInterface $candleEmitter
@@ -35,55 +50,61 @@ class CandleAggregator
     }
 
     /**
-     * @param \DateTime $from
-     * @param \DateTime $to
      * @return \Generator|\CoinCorp\RateAnalyzer\Candle[][]
      */
-    public function next(DateTime $from, DateTime $to)
+    public function rows()
     {
-        /** @var \CoinCorp\RateAnalyzer\Candle[][] $candles */
-        $candles = [];
+        /** @var \CoinCorp\RateAnalyzer\Candle[] $indexes */
+        $candles = array_fill(0, count($this->candleEmitters), null);
 
+        /** @var \DateTime $currentTime */
+        $currentTime = null;
+
+        // Initialize generators
+        /** @var \Generator|\CoinCorp\RateAnalyzer\Candle[] $generators */
+        $generators = array_fill(0, count($this->candleEmitters), null);
         foreach ($this->candleEmitters as $column => $candleEmitter) {
-            $tmp = $candleEmitter->getCandles($from, $to);
-            if (count($tmp) === 0) {
-                return [];
-            }
-            array_push($candles, $tmp);
+            $generators[$column] = $candleEmitter->candles();
         }
-
-        $indexes = array_fill(0, count($this->candleEmitters), 0);
 
         while (true) {
-            /** @var \DateTime $time */
-            $time = null;
-            foreach ($candles as $candleColumn) {
-                
-            }
-        }
+            foreach ($generators as $column => $generator) {
+                if (!$generator->valid()) {
+                    // Finish generator if any candle emitter closed
+                    break 2;
+                }
 
-        foreach ($this->candleEmitters as $column => $candleEmitter) {
+                /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+                $candle = $generator->current();
 
-
-
-
-
-            foreach ($candleEmitter->getCandles($from, $to) as $row => $candle) {
-
-
-
-
-                if ($row < count($candleRows)) {
-                    $candleRows[$row][$column] = $candle;
-                } elseif ($row === count($candleRows)) {
-                    array_push($candleRows, array_fill(0, count($this->candleEmitters), null));
-                    $candleRows[$row][$column] = $candle;
-                } else {
-                    array_push($candleRows, array_fill(0, count($this->candleEmitters), null));
+                if (empty($currentTime)) {
+                    $currentTime = $candle->start;
+                    $candles[$column] = $candle;
+                } elseif ($currentTime->getTimestamp() === $candle->start->getTimestamp()) {
+                    $candles[$column] = $candle;
+                } elseif ($currentTime->getTimestamp() > $candle->start->getTimestamp()) {
+                    do {
+                        $generator->next();
+                        $candle = $generator->current();
+                    } while ($currentTime->getTimestamp() > $candle->start->getTimestamp());
+                    $candles[$column] = $candle;
+                } elseif ($currentTime->getTimestamp() < $candle->start->getTimestamp()) {
+                    $currentTime = $candle->start;
+                    $candles[$column] = $candle;
                 }
             }
-        }
 
-        return $candleRows;
+            foreach ($candles as $candle) {
+                if ($candle->start->getTimestamp() !== $currentTime->getTimestamp()) {
+                    continue 2;
+                }
+            }
+
+            yield $candles;
+
+            foreach ($generators as $generator) {
+                $generator->next();
+            }
+        }
     }
 }
