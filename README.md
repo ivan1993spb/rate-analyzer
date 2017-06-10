@@ -3,10 +3,22 @@
 
 - Написать README.md
 - Автоматизировать выгрузку БД со свечами
-- Добавить Makefile
 - Добавить в аггрегатор разные метрики
 
-## Example
+## Install
+
+You need docker
+
+1. Install dependencies `make install`
+2. Build image `make build`
+
+## Usage
+
+```
+docker run --rm -v $(PWD)/data:/app/data rate-analyzer
+```
+
+## Examples
 
 ### CandleBatcher
 
