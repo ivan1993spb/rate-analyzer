@@ -3,6 +3,7 @@
 namespace CoinCorp\RateAnalyzer;
 
 use DateTime;
+use DateTimeZone;
 
 /**
  * Class Candle
@@ -94,6 +95,7 @@ class Candle
     public static function fromArray($label, array $arr)
     {
         $start = new DateTime();
+        $start->setTimezone(new DateTimeZone('UTC'));
         if (array_key_exists('start', $arr)) {
             if ($arr['start'] instanceof DateTime) {
                 $start = $arr['start'];

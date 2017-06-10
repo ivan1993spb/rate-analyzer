@@ -54,7 +54,9 @@ class CandleAggregator
      */
     public function rows()
     {
-        /** @var \CoinCorp\RateAnalyzer\Candle[] $indexes */
+        $this->log->info("Starting rows generator");
+
+        /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
         $candles = array_fill(0, count($this->candleEmitters), null);
 
         /** @var \DateTime $currentTime */
@@ -70,7 +72,7 @@ class CandleAggregator
         while (true) {
             foreach ($generators as $column => $generator) {
                 if (!$generator->valid()) {
-                    // Finish generator if any candle emitter closed
+                    // Finish aggregator if any candle emitter closed
                     break 2;
                 }
 
@@ -99,6 +101,8 @@ class CandleAggregator
                     continue 2;
                 }
             }
+
+            $this->log->info("Output row");
 
             yield $candles;
 
