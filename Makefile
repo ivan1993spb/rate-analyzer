@@ -11,3 +11,7 @@ build: rmi
 rmi:
 
 	@docker rmi $(IMAGE_NAME) 2>/dev/null || true
+
+test:
+
+	@docker run --rm -v $(PWD):/app -w /app phpunit/phpunit --verbose

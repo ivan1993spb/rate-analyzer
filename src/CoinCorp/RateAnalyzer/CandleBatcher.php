@@ -56,11 +56,11 @@ class CandleBatcher implements CandleEmitterInterface
                 array_push($this->cache, $candle);
 
                 if (count($this->cache) === $this->batchSize) {
-                    $bigCandle = $this->cache[0];
-                    $prices = $this->cache[0]->vwp * $this->cache[0]->volume;
+                    $bigCandle = array_shift($this->cache);
+                    $prices = $bigCandle->vwp * $bigCandle->volume;
 
-                    for ($i = 1; $i < count($this->cache); $i++) {
-                        $smallCandle = $this->cache[$i];
+                    while (count($this->cache) > 0) {
+                        $smallCandle = array_shift($this->cache);
 
                         $bigCandle->high = max($bigCandle->high, $smallCandle->high);
                         $bigCandle->low = min($bigCandle->low, $smallCandle->low);
@@ -77,8 +77,6 @@ class CandleBatcher implements CandleEmitterInterface
                         $bigCandle->vwp = $bigCandle->open;
                     }
 
-                    $this->cache = [];
-
                     yield $bigCandle;
                 }
             }
@@ -93,5 +91,22 @@ class CandleBatcher implements CandleEmitterInterface
     public function getCandleSize()
     {
         return $this->batchSize * $this->candleEmitter->getCandleSize();
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->candleEmitter->getName();
+    }
+
+    /**
+     * @param integer $seconds
+     * @return void
+     */
+    public function skipSeconds($seconds)
+    {
+        $this->candleEmitter->skipSeconds($seconds);
     }
 }

@@ -50,6 +50,13 @@ class CandleSource implements CandleEmitterInterface
     private $to;
 
     /**
+     * Number of candles in head of stream to skip
+     *
+     * @var integer
+     */
+    private $skipCandles = 0;
+
+    /**
      * CandleSource constructor.
      *
      * @param string         $name
@@ -104,6 +111,10 @@ class CandleSource implements CandleEmitterInterface
 
             if (count($candles) > 0) {
                 foreach ($candles as $candle) {
+                    if ($this->skipCandles > 0) {
+                        $this->skipCandles--;
+                        continue;
+                    }
                     yield $candle;
                 }
 
@@ -122,5 +133,22 @@ class CandleSource implements CandleEmitterInterface
     public function getCandleSize()
     {
         return self::MIN_CANDLE_SIZE;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param integer $seconds
+     * @return void
+     */
+    public function skipSeconds($seconds)
+    {
+        $this->skipCandles = (integer)floor($seconds / self::MIN_CANDLE_SIZE);
     }
 }

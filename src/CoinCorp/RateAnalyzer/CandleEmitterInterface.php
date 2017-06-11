@@ -20,4 +20,15 @@ interface CandleEmitterInterface
      * @return integer
      */
     public function getCandleSize();
+
+    /**
+     * @return string
+     */
+    public function getName();
+
+    /**
+     * @param integer $seconds
+     * @return void
+     */
+    public function skipSeconds($seconds);
 }

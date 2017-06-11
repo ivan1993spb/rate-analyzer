@@ -46,6 +46,13 @@ class CandleAggregator
             }
         }
 
+        /** @var \CoinCorp\RateAnalyzer\Candle $firstCandle */
+        $firstCandle = $candleEmitter->candles()->current();
+
+        $skipSeconds = $candleSize - $firstCandle->start->getTimestamp() % $candleSize;
+        $this->log->info("Seconds to skip", [$skipSeconds]);
+        $candleEmitter->skipSeconds($skipSeconds);
+
         array_push($this->candleEmitters, $candleEmitter);
     }
 
@@ -56,21 +63,24 @@ class CandleAggregator
     {
         $this->log->info("Starting rows generator");
 
-        /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
-        $candles = array_fill(0, count($this->candleEmitters), null);
-
-        /** @var \DateTime $currentTime */
-        $currentTime = null;
-
-        // Initialize generators
-        /** @var \Generator|\CoinCorp\RateAnalyzer\Candle[] $generators */
+        /** @var \Generator[] $generators */
         $generators = array_fill(0, count($this->candleEmitters), null);
         foreach ($this->candleEmitters as $column => $candleEmitter) {
             $generators[$column] = $candleEmitter->candles();
         }
 
+        /** @var \DateTime $currentTime */
+        $currentTime = null;
+
+        /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
+        $candles = array_fill(0, count($this->candleEmitters), null);
+
         while (true) {
-            foreach ($generators as $column => $generator) {
+            $column = 0;
+
+            while ($column < count($generators)) {
+                $generator = $generators[$column];
+
                 if (!$generator->valid()) {
                     // Finish aggregator if any candle emitter closed
                     break 2;
@@ -79,27 +89,32 @@ class CandleAggregator
                 /** @var \CoinCorp\RateAnalyzer\Candle $candle */
                 $candle = $generator->current();
 
-                if (empty($currentTime)) {
+                if (empty($currentTime) || $currentTime->getTimestamp() < $candle->start->getTimestamp()) {
                     $currentTime = $candle->start;
-                    $candles[$column] = $candle;
-                } elseif ($currentTime->getTimestamp() === $candle->start->getTimestamp()) {
-                    $candles[$column] = $candle;
-                } elseif ($currentTime->getTimestamp() > $candle->start->getTimestamp()) {
-                    do {
-                        $generator->next();
-                        $candle = $generator->current();
-                    } while ($currentTime->getTimestamp() > $candle->start->getTimestamp());
-                    $candles[$column] = $candle;
-                } elseif ($currentTime->getTimestamp() < $candle->start->getTimestamp()) {
-                    $currentTime = $candle->start;
-                    $candles[$column] = $candle;
+                    $this->log->info("New time cursor", [$currentTime]);
+                    if ($column != 0) {
+                        $column = 0;
+                    }
+                    continue;
                 }
-            }
 
-            foreach ($candles as $candle) {
-                if ($candle->start->getTimestamp() !== $currentTime->getTimestamp()) {
-                    continue 2;
+                while ($currentTime->getTimestamp() > $candle->start->getTimestamp()) {
+                    $this->log->info("Skip candles to sync generator with current time", [$this->candleEmitters[$column]->getName(), $candle->start, $currentTime]);
+                    $generator->next();
+                    $candle = $generator->current();
+                    if (!$generator->valid()) {
+                        // Candle emitter closed
+                        break 3;
+                    }
                 }
+
+                if ($currentTime->getTimestamp() < $candle->start->getTimestamp()) {
+                    $this->log->warn("Cannot sync time");
+                }
+
+                $candles[$column] = $candle;
+
+                $column++;
             }
 
             $this->log->info("Output row");

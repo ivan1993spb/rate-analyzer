@@ -1,7 +1,6 @@
 
 ## TODO
 
-- Написать README.md
 - Автоматизировать выгрузку БД со свечами
 - Добавить в аггрегатор разные метрики
 
@@ -16,6 +15,12 @@ You need docker
 
 ```
 docker run --rm -v $(PWD)/data:/app/data rate-analyzer
+```
+
+## Test
+
+```
+make test
 ```
 
 ## Examples

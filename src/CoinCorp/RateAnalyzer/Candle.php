@@ -90,7 +90,7 @@ class Candle
     /**
      * @param string $label
      * @param array $arr
-     * @return static
+     * @return self
      */
     public static function fromArray($label, array $arr)
     {
