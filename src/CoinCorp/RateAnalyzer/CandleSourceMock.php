@@ -65,4 +65,13 @@ class CandleSourceMock implements CandleEmitterInterface
     {
         return $this->name;
     }
+
+    /**
+     * @param integer $seconds
+     * @return void
+     */
+    public function skipSeconds($seconds)
+    {
+        // TODO: Implement skipSeconds() method.
+    }
 }
