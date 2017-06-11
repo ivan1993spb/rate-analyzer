@@ -5,6 +5,7 @@ namespace CoinCorp\RateAnalyzer;
 use CoinCorp\RateAnalyzer\Exceptions\CandleSourceFileNotFoundException;
 use DateTime;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Builder;
 use PDO;
 
 /**
@@ -51,14 +52,14 @@ class CandleSource implements CandleEmitterInterface
     /**
      * CandleSource constructor.
      *
-     * @param string    $name
-     * @param string    $path
-     * @param string    $table
-     * @param \DateTime $from
-     * @param \DateTime $to
+     * @param string         $name
+     * @param string         $path
+     * @param string         $table
+     * @param \DateTime|null $from
+     * @param \DateTime|null $to
      * @throws CandleSourceFileNotFoundException
      */
-    public function __construct($name, $path, $table, DateTime $from, DateTime $to)
+    public function __construct($name, $path, $table, DateTime $from = null, DateTime $to = null)
     {
         $this->name = $name;
         $this->path = $path;
@@ -88,18 +89,18 @@ class CandleSource implements CandleEmitterInterface
             /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
             $candles = [];
 
-            $callback = function ($raw) use (&$candles) {
+            $query = new Builder($this->connection);
+            $query->from($this->table)->offset($offset)->limit($limit)->orderBy('start');
+            if (!empty($this->from) && !empty($this->to)) {
+                $query->whereBetween('start', [$this->from->getTimestamp(), $this->to->getTimestamp()]);
+            } elseif (!empty($this->from) && empty($this->to)) {
+                $query->where('start', '>', $this->from->getTimestamp());
+            } elseif (empty($this->from) && !empty($this->to)) {
+                $query->where('start', '<', $this->to->getTimestamp());
+            }
+            $query->get()->each(function ($raw) use (&$candles) {
                 array_push($candles, Candle::fromArray($this->name, (array)$raw));
-            };
-
-            $this->connection
-                ->table($this->table)
-                ->whereBetween('start', [$this->from->getTimestamp(), $this->to->getTimestamp()])
-                ->orderBy('start')
-                ->offset($offset)
-                ->limit($limit)
-                ->get()
-                ->each($callback);
+            });
 
             if (count($candles) > 0) {
                 foreach ($candles as $candle) {
