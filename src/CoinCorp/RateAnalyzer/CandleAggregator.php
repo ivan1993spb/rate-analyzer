@@ -11,7 +11,7 @@ use Monolog\Logger;
  *
  * @package CoinCorp\RateAnalyzer
  */
-class CandleAggregator
+class CandleAggregator implements AggregatorInterface
 {
     /**
      * @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[]
@@ -57,7 +57,7 @@ class CandleAggregator
         $firstCandle = $generator->current();
 
         $skipSeconds = $candleSize - $firstCandle->start->getTimestamp() % $candleSize;
-        $this->log->info("Seconds to skip", [$skipSeconds]);
+        $this->log->info("Seconds to skip", [$candleEmitter->getName(), $skipSeconds]);
         $candleEmitter->skipSeconds($skipSeconds);
 
         array_push($this->candleEmitters, $candleEmitter);
