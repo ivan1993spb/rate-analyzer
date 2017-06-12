@@ -9,7 +9,7 @@ namespace CoinCorp\RateAnalyzer;
  */
 class Analyzer
 {
-    const CACHE_SIZE = 1000;
+    const CACHE_SIZE = 50;
 
     /**
      * @var \CoinCorp\RateAnalyzer\AggregatorInterface
@@ -29,13 +29,15 @@ class Analyzer
     public function __construct(AggregatorInterface $aggregator)
     {
         $this->aggregator = $aggregator;
+        ini_set("trader.real_precision", 10);
     }
 
-    public function analyze() {
+    public function analyze()
+    {
         foreach ($this->aggregator->rows() as $row) {
             // Update cache
             foreach ($row as $column => $candle) {
-                if (!is_array($this->cache[$column])) {
+                if (!isset($this->cache[$column])) {
                     $this->cache[$column] = [];
                 }
                 while (sizeof($this->cache[$column]) >= self::CACHE_SIZE) {
@@ -50,8 +52,10 @@ class Analyzer
                     foreach ($candles as $candle) {
                         array_push($real, $candle->close);
                     }
-                    print_r(trader_macd($real, 10, 21, 9));
-                    exit();
+                    var_dump($real);
+                    var_dump(TRADER_ERR_SUCCESS, TRADER_ERR_LIB_NOT_INITIALIZE, TRADER_ERR_BAD_PARAM);
+                    var_dump(trader_macd($real, 10, 21, 9), trader_errno());
+                    exit;
                 }
             }
         }

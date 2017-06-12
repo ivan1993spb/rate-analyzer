@@ -106,7 +106,8 @@ class CandleAggregator implements AggregatorInterface
                 }
 
                 while ($currentTime->getTimestamp() > $candle->start->getTimestamp()) {
-                    $this->log->info("Skip candles to sync generator with current time", [$this->candleEmitters[$column]->getName(), $candle->start, $currentTime]);
+                    $this->log->info("Skip candles to sync generator with current time", [$this->candleEmitters[$column]->getName(),
+                        $candle->start, $currentTime]);
                     $generator->next();
                     if (!$generator->valid()) {
                         // Candle emitter closed
@@ -124,7 +125,7 @@ class CandleAggregator implements AggregatorInterface
                 $column++;
             }
 
-            $this->log->info("Output row");
+            $this->log->info("Output row", [$currentTime]);
 
             yield $candles;
 
