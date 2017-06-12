@@ -2,6 +2,7 @@
 
 namespace CoinCorp\RateAnalyzer;
 
+use CoinCorp\RateAnalyzer\Exceptions\ClosedCandleEmitterException;
 use CoinCorp\RateAnalyzer\Exceptions\MismatchCandleSizesException;
 use Monolog\Logger;
 
@@ -34,6 +35,7 @@ class CandleAggregator
 
     /**
      * @param \CoinCorp\RateAnalyzer\CandleEmitterInterface $candleEmitter
+     * @throws \CoinCorp\RateAnalyzer\Exceptions\ClosedCandleEmitterException
      * @throws \CoinCorp\RateAnalyzer\Exceptions\MismatchCandleSizesException
      */
     public function addCandleEmitter(CandleEmitterInterface $candleEmitter)
@@ -46,8 +48,13 @@ class CandleAggregator
             }
         }
 
+        $generator = $candleEmitter->candles();
+        if (!$generator->valid()) {
+            throw new ClosedCandleEmitterException();
+        }
+
         /** @var \CoinCorp\RateAnalyzer\Candle $firstCandle */
-        $firstCandle = $candleEmitter->candles()->current();
+        $firstCandle = $generator->current();
 
         $skipSeconds = $candleSize - $firstCandle->start->getTimestamp() % $candleSize;
         $this->log->info("Seconds to skip", [$skipSeconds]);
@@ -101,11 +108,11 @@ class CandleAggregator
                 while ($currentTime->getTimestamp() > $candle->start->getTimestamp()) {
                     $this->log->info("Skip candles to sync generator with current time", [$this->candleEmitters[$column]->getName(), $candle->start, $currentTime]);
                     $generator->next();
-                    $candle = $generator->current();
                     if (!$generator->valid()) {
                         // Candle emitter closed
                         break 3;
                     }
+                    $candle = $generator->current();
                 }
 
                 if ($currentTime->getTimestamp() < $candle->start->getTimestamp()) {

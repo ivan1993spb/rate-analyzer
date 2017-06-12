@@ -12,6 +12,17 @@ use PHPUnit\Framework\TestCase;
  */
 class CandleAggregatorTest extends TestCase
 {
+    /**
+     * @expectedException \CoinCorp\RateAnalyzer\Exceptions\ClosedCandleEmitterException
+     */
+    public function testAddingClosedCandleEmitter()
+    {
+        $logger = new Logger("test");
+        $logger->pushHandler(new NullHandler());
+        $aggregator = new CandleAggregator($logger);
+        $aggregator->addCandleEmitter(new CandleSourceMock("first_mock", []));
+    }
+
     public function testCandleSizeMultiplication()
     {
         $firstSource = new CandleSourceMock("first_mock", [

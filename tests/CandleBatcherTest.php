@@ -10,6 +10,14 @@ use PHPUnit\Framework\TestCase;
  */
 class CandleBatcherTest extends TestCase
 {
+    /**
+     * @expectedException \CoinCorp\RateAnalyzer\Exceptions\ZeroBatchSizeException
+     */
+    public function testCreateCandleBatcherWithZeroBatchSize()
+    {
+        new CandleBatcher(new CandleSourceMock("mock", []), 0);
+    }
+
     public function testCandleSizeMultiplication()
     {
         $minCandleSize = 60;
