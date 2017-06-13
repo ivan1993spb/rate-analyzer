@@ -12,6 +12,28 @@ use PHPUnit\Framework\TestCase;
  */
 class CandleAggregatorTest extends TestCase
 {
+    public function testCapacityReturnsZeroForEmptyAggregator()
+    {
+        $logger = new Logger("test");
+        $logger->pushHandler(new NullHandler());
+        $aggregator = new CandleAggregator($logger);
+        $this->assertEquals(0, $aggregator->capacity());
+    }
+
+    public function testCapacityReturnsValidCountOfEmittersInAggregator()
+    {
+        $logger = new Logger("test");
+        $logger->pushHandler(new NullHandler());
+        $aggregator = new CandleAggregator($logger);
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->assertEquals($i, $aggregator->capacity());
+            $aggregator->addCandleEmitter(new CandleSourceMock("first_mock", [
+                new Candle("first_mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            ]));
+        }
+    }
+
     /**
      * @expectedException \CoinCorp\RateAnalyzer\Exceptions\ClosedCandleEmitterException
      */

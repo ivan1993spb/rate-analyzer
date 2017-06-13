@@ -64,6 +64,14 @@ class CandleAggregator implements AggregatorInterface
     }
 
     /**
+     * @return integer
+     */
+    public function capacity()
+    {
+       return sizeof($this->candleEmitters);
+    }
+
+    /**
      * @return \Generator|\CoinCorp\RateAnalyzer\Candle[][]
      */
     public function rows()
