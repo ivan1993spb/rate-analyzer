@@ -152,12 +152,10 @@ class CandleAggregator implements AggregatorInterface
             $prevDataRow = $dataRow;
 
             // Clear history
-            /** @var \CoinCorp\RateAnalyzer\DataRow|null $tmpDataRow */
             for ($i = 0; $i < $this->historySize && $dataRow->prev !== null; $i++) {
                 $dataRow = $dataRow->prev;
             }
             $dataRow->prev = null;
-            unset($tmpDataRow);
 
             foreach ($generators as $generator) {
                 $generator->next();
