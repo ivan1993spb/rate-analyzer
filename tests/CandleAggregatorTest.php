@@ -107,7 +107,7 @@ class CandleAggregatorTest extends TestCase
                 $dataRow = $dataRow->prev;
             }
 
-            $this->assertEquals($count, $historySize);
+            $this->assertEquals($historySize, $count);
         }
     }
 }
