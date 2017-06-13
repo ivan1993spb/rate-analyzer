@@ -9,7 +9,16 @@ use CoinCorp\RateAnalyzer\CandleAggregator;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
-$aggregator = new CandleAggregator(new Logger('name'));
+
+// Переменные
+// - Размер свечи
+// - Используемые индикаторы
+// - Параметры используемых индикаторов
+// - Насколько и за какой срок курс должен повыситься
+// - Минимальная и максимальная длина куска состояния рынка
+
+$logger = new Logger('name');
+$aggregator = new CandleAggregator($logger);
 $aggregator->addCandleEmitter(new CandleBatcher(new CandleSource(
     "btc-eth_poloniex", "data/01-15_04-17_btc-eth_poloniex.db",
     "candles_BTC_ETH",
@@ -40,5 +49,5 @@ $aggregator->addCandleEmitter(new CandleBatcher(new CandleSource(
 //}
 
 
-$analyzer = new Analyzer($aggregator);
+$analyzer = new Analyzer($aggregator, $logger);
 $analyzer->analyze();

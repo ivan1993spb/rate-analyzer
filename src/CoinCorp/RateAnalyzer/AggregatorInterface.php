@@ -13,4 +13,9 @@ interface AggregatorInterface
      * @return \Generator|\CoinCorp\RateAnalyzer\Candle[][]
      */
     public function rows();
+
+    /**
+     * @return integer
+     */
+    public function capacity();
 }
