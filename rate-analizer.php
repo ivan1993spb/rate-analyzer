@@ -18,7 +18,7 @@ use Monolog\Handler\StreamHandler;
 // - Минимальная и максимальная длина куска состояния рынка
 
 $logger = new Logger('name');
-$aggregator = new CandleAggregator($logger);
+$aggregator = new CandleAggregator($logger, 1000);
 $aggregator->addCandleEmitter(new CandleBatcher(new CandleSource(
     "btc-eth_poloniex", "data/01-15_04-17_btc-eth_poloniex.db",
     "candles_BTC_ETH",

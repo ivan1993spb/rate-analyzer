@@ -12,17 +12,10 @@ use Monolog\Logger;
  */
 class Analyzer
 {
-    const CACHE_SIZE = 50;
-
     /**
      * @var \CoinCorp\RateAnalyzer\AggregatorInterface
      */
     private $aggregator;
-
-    /**
-     * @var \CoinCorp\RateAnalyzer\Candle[][]
-     */
-    private $cache;
 
     /**
      * @var \Monolog\Logger
@@ -39,6 +32,7 @@ class Analyzer
     {
         $this->aggregator = $aggregator;
         $this->log = $log;
+
         ini_set("trader.real_precision", 10);
     }
 
@@ -47,73 +41,83 @@ class Analyzer
      */
     public function analyze()
     {
+        $mainColumn = 0;
+        $cacheSize = 100;
+        $cache = [];
+
+        // Пременные
+        // - Используемые индикаторы
+        // - Параметры используемых индикаторов
+        // - Насколько и за какой срок курс должен повыситься
+        // - Минимальная и максимальная длина куска состояния рынка
+        $minTrendLength = 10; // Свечей
+        $trend = null;
+        $trendLength = 0;
+
+        $startPrice = 0;
+
+        $cursor = 0;
+
         // Return if nothing to analyze
         if ($this->aggregator->capacity() === 0) {
             return;
         }
 
-        foreach ($this->aggregator->rows() as $row) {
-            if (sizeof($row) !== $this->aggregator->capacity()) {
-                throw new InvalidCapacityException();
+        foreach ($this->aggregator->rows() as $dataRow) {
+            array_push($cache, $dataRow->candles[$mainColumn]->close);
+            while (sizeof($cache) > $cacheSize) {
+                array_shift($cache);
             }
 
-            // Update cache
-            foreach ($row as $column => $candle) {
-                if (!isset($this->cache[$column])) {
-                    $this->cache[$column] = [];
-                }
-                while (sizeof($this->cache[$column]) >= self::CACHE_SIZE) {
-                    array_shift($this->cache[$column]);
-                }
-                array_push($this->cache[$column], $candle);
-            }
+            $macd = trader_macd($cache, 10, 21, 9);
+            if (trader_errno() === TRADER_ERR_SUCCESS) {
+                $macd = array_values($macd[0]);
 
-//            foreach ($this->cache as $column => $candles) {
-                if (sizeof($this->cache[0]) === self::CACHE_SIZE) {
-//                    $res[$column] = [];
-                    $real = [];
-                    foreach ($this->cache[0] as $candle) {
-                        array_push($real, $candle->close);
-                    }
-//                    var_dump($real);
-//                    var_dump(TRADER_ERR_SUCCESS, TRADER_ERR_LIB_NOT_INITIALIZE, TRADER_ERR_BAD_PARAM);
-//                    var_dump(trader_macd($real, 10, 21, 9), trader_errno());
-                    $macd = trader_macd($real, 10, 21, 9);
-                    $vals = array_values($macd[0]);
-                    if (trader_errno() === TRADER_ERR_SUCCESS) {
+                $this->log->info("MACD", [$macd[sizeof($macd)-1]]);
 
-//                        if ($vals[0] > $vals[sizeof($vals)-1]) {
-//                            continue;
-//                        }
-                        foreach ($vals as $val) {
-                            if ($val < 0) {
-                                continue 2;
-                            }
+                if ($macd[sizeof($macd)-1] > 0) {
+                    if ($trend != 'up') {
+                        if ($trend === 'down' && $trendLength >= $minTrendLength) {
+                            $finishPrice = $dataRow->candles[$mainColumn]->close;
+                            $this->log->alert("DOWN -> UP", [$trendLength, $finishPrice / $startPrice]);
+                            echo "DOWN -> UP", PHP_EOL;
+                            $this->save($dataRow, $trendLength);
                         }
-                        $this->log->info("MACD", $vals);
-                    } else {
-                        continue;
-                    }
-                } else {
-                    continue;
-                }
-//            }
-//            echo json_encode($res);
-//            exit();
 
-            $j = 0;
-            while (true) {
-                $row = [$j + 1];
-                for ($i = 0; $i < $this->aggregator->capacity(); $i++) {
-                    if (!isset($this->cache[$i][$j])) {
-                        break 2;
+                        $trend = 'up';
+                        $trendLength = 0;
+                        $startPrice = $dataRow->candles[$mainColumn]->close;
                     }
-                    array_push($row, $this->cache[$i][$j]->start->getTimestamp(), $this->cache[$i][$j]->close);
+                } elseif ($macd[sizeof($macd)-1] < 0) {
+                    if ($trend != 'down') {
+                        if ($trend === 'up' && $trendLength >= $minTrendLength) {
+                            $finishPrice = $dataRow->candles[$mainColumn]->close;
+                            $this->log->alert("UP -> DOWN", [$trendLength, $finishPrice / $startPrice]);
+                            echo "UP -> DOWN", PHP_EOL;
+                            $this->save($dataRow, $trendLength);
+                        }
+
+                        $trend = 'down';
+                        $trendLength = 0;
+                        $startPrice = $dataRow->candles[$mainColumn]->close;
+                    }
                 }
-                fputcsv(STDOUT, $row, ';');
-                $j++;
+
+                $trendLength += 1;
+            } else {
+                $this->log->warn("Cannot calculate MACD");
             }
-            exit();
         }
+    }
+
+    private function save(DataRow $dataRow, $count)
+    {
+        $data = [];
+        for ($i = 0; $i < $count && $dataRow !== null; $i++) {
+            array_push($data, $dataRow->candles[0]->close);
+            $dataRow = $dataRow->prev;
+            fputcsv(STDOUT, [$i+1, $dataRow->candles[0]->start->getTimestamp(), $dataRow->candles[0]->close]);
+        }
+        echo "-------------------", PHP_EOL;
     }
 }
