@@ -24,13 +24,20 @@ class CandleAggregator implements AggregatorInterface
     private $log;
 
     /**
+     * @var integer
+     */
+    private $historySize;
+
+    /**
      * CandleAggregator constructor.
      *
      * @param \Monolog\Logger $log
+     * @param integer         $historySize
      */
-    public function __construct(Logger $log)
+    public function __construct(Logger $log, $historySize = 0)
     {
         $this->log = $log;
+        $this->historySize = $historySize;
     }
 
     /**
@@ -72,7 +79,7 @@ class CandleAggregator implements AggregatorInterface
     }
 
     /**
-     * @return \Generator|\CoinCorp\RateAnalyzer\Candle[][]
+     * @return \Generator|\CoinCorp\RateAnalyzer\DataRow[]
      */
     public function rows()
     {
@@ -87,10 +94,13 @@ class CandleAggregator implements AggregatorInterface
         /** @var \DateTime $currentTime */
         $currentTime = null;
 
-        /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
-        $candles = array_fill(0, count($this->candleEmitters), null);
+        /** @var \CoinCorp\RateAnalyzer\DataRow $prevDataRow */
+        $prevDataRow = null;
 
         while (true) {
+            /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
+            $candles = array_fill(0, count($this->candleEmitters), null);
+
             $column = 0;
 
             while ($column < count($generators)) {
@@ -135,7 +145,19 @@ class CandleAggregator implements AggregatorInterface
 
             $this->log->info("Output row", [$currentTime]);
 
-            yield $candles;
+            $dataRow = new DataRow($currentTime, $candles, $prevDataRow);
+
+            yield $dataRow;
+
+            $prevDataRow = $dataRow;
+
+            // Clear history
+            /** @var \CoinCorp\RateAnalyzer\DataRow|null $tmpDataRow */
+            for ($i = 0; $i < $this->historySize && $dataRow->prev !== null; $i++) {
+                $dataRow = $dataRow->prev;
+            }
+            $dataRow->prev = null;
+            unset($tmpDataRow);
 
             foreach ($generators as $generator) {
                 $generator->next();

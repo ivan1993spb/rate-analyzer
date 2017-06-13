@@ -10,7 +10,7 @@ namespace CoinCorp\RateAnalyzer;
 interface AggregatorInterface
 {
     /**
-     * @return \Generator|\CoinCorp\RateAnalyzer\Candle[][]
+     * @return \Generator|\CoinCorp\RateAnalyzer\DataRow[]
      */
     public function rows();
 
