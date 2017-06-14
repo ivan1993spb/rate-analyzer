@@ -54,6 +54,7 @@ class Analyzer
         $trendLength = 0;
 
         $startPrice = 0;
+        $trendStart = null;
 
         $cursor = 0;
 
@@ -80,14 +81,16 @@ class Analyzer
                             $finishPrice = $dataRow->candles[$mainColumn]->close;
                             $this->log->alert("DOWN -> UP", [$trendLength, $finishPrice / $startPrice]);
                             if ($finishPrice / $startPrice < 0.97) {
-                                echo "DOWN -> UP", PHP_EOL;
-                                $this->save($dataRow, $trendLength);
+//                                echo "DOWN -> UP", PHP_EOL;
+//                                $this->save($dataRow, $trendLength);
+                                $this->toExchangeStateSlice($dataRow, $trendLength, [$trendStart]);
                             }
                         }
 
                         $trend = 'up';
                         $trendLength = 0;
                         $startPrice = $dataRow->candles[$mainColumn]->close;
+                        $trendStart = $dataRow->candles[$mainColumn]->start;
                     }
                 } elseif ($macd[sizeof($macd)-1] < 0) {
                     if ($trend != 'down') {
@@ -95,14 +98,16 @@ class Analyzer
                             $finishPrice = $dataRow->candles[$mainColumn]->close;
                             $this->log->alert("UP -> DOWN", [$trendLength, $finishPrice / $startPrice]);
                             if ($finishPrice / $startPrice > 1.03) {
-                                echo "UP -> DOWN", PHP_EOL;
-                                $this->save($dataRow, $trendLength);
+//                                echo "UP -> DOWN", PHP_EOL;
+//                                $this->save($dataRow, $trendLength);
+                                $this->toExchangeStateSlice($dataRow, $trendLength, [$trendStart]);
                             }
                         }
 
                         $trend = 'down';
                         $trendLength = 0;
                         $startPrice = $dataRow->candles[$mainColumn]->close;
+                        $trendStart = $dataRow->candles[$mainColumn]->start;
                     }
                 }
 
@@ -134,5 +139,57 @@ class Analyzer
         }
         fclose($h);
         $this->fileCounter++;
+    }
+
+    /**
+     * @param \CoinCorp\RateAnalyzer\DataRow $dataRow
+     * @param integer                        $length
+     * @param \DateTime[]                    $times
+     * @return \CoinCorp\RateAnalyzer\ExchangeStateSlice
+     */
+    private function toExchangeStateSlice(DataRow $dataRow, $length, $times = [])
+    {
+        $exchangeStateSlice = new ExchangeStateSlice();
+
+        $exchangeStateSlice->series = array_fill(0, sizeof($dataRow->candles), []);
+
+        // Копируем тренд
+        for ($i = 0; $i < $length && $dataRow->prev !== null; $i++) {
+            foreach ($dataRow->candles as $column => $candle) {
+                array_push($exchangeStateSlice->series[$column], [
+                    'start' => $candle->start->getTimestamp(),
+                    'price' => $candle->close,
+                ]);
+            }
+            $dataRow = $dataRow->prev;
+        }
+
+        // Копируем период предшествывающий тренду
+        if ($dataRow !== null) {
+            for ($i = 0; $i < $length * 4 && $dataRow->prev !== null; $i++) {
+                foreach ($dataRow->candles as $column => $candle) {
+                    array_push($exchangeStateSlice->series[$column], [
+                        'start' => $candle->start->getTimestamp(),
+                        'price' => $candle->close,
+                    ]);
+                }
+                $dataRow = $dataRow->prev;
+            }
+        }
+
+        // TODO: Составить список названий графиков.
+
+        // TODO: Добавить title.
+
+        $timestamps = [];
+        foreach ($times as $time) {
+            array_push($timestamps, $time->getTimestamp());
+        }
+        $exchangeStateSlice->verticalLines = $timestamps;
+
+        file_put_contents("output/state".$this->fileCounter.".json", json_encode($exchangeStateSlice));
+        $this->fileCounter++;
+
+        return $exchangeStateSlice;
     }
 }
