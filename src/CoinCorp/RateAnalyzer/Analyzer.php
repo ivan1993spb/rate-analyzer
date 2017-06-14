@@ -113,16 +113,26 @@ class Analyzer
         }
     }
 
+    private $fileCounter = 0;
+
     private function save(DataRow $dataRow, $count)
     {
-        $count+=$count*4;
+        $count += $count * 4;
         $data = [];
+        $h = fopen(sprintf("output/data_%d.csv", $this->fileCounter), "w");
+        if ($h === false) {
+            $this->log->warn("Cannot create output file");
+            return;
+        }
+        $this->log->warn("Writing output file");
+        fputcsv($h, ["id", "timestamp", "price"], ";");
         for ($i = 0; $i < $count && $dataRow->prev !== null; $i++) {
             array_push($data, $dataRow->candles[0]->close);
             $dataRow = $dataRow->prev;
 //            print_r($dataRow);
-            fputcsv(STDOUT, [$i+1, $dataRow->candles[0]->start->getTimestamp(), $dataRow->candles[0]->close], ";");
+            fputcsv($h, [$i+1, $dataRow->candles[0]->start->getTimestamp(), $dataRow->candles[0]->close], ";");
         }
-        echo "-------------------", PHP_EOL;
+        fclose($h);
+        $this->fileCounter++;
     }
 }

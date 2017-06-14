@@ -14,7 +14,7 @@ You need docker
 ## Usage
 
 ```
-docker run --rm -v $(PWD)/data:/app/data rate-analyzer
+docker run --rm -v $(pwd)/data:/app/data -v $(pwd)/output:/app/output rate-analyzer
 ```
 
 ## Test
