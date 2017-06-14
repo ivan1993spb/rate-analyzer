@@ -2,6 +2,8 @@
 
 namespace CoinCorp\RateAnalyzer;
 
+use CoinCorp\RateAnalyzer\Exceptions\InvalidCapacityException;
+
 /**
  * Class DataRow
  *
@@ -30,9 +32,15 @@ class DataRow
      * @param \DateTime                           $time
      * @param \CoinCorp\RateAnalyzer\Candle[]     $candles
      * @param null|\CoinCorp\RateAnalyzer\DataRow $prev
+     * @throws \CoinCorp\RateAnalyzer\Exceptions\InvalidCapacityException
      */
     public function __construct($time, $candles, $prev = null)
     {
+        if ($prev !== null) {
+            if (sizeof($prev->candles) !== sizeof($candles)) {
+                throw new InvalidCapacityException();
+            }
+        }
         $this->time = $time;
         $this->candles = $candles;
         $this->prev = $prev;

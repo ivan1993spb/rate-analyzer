@@ -2,7 +2,6 @@
 
 namespace CoinCorp\RateAnalyzer;
 
-use CoinCorp\RateAnalyzer\Exceptions\InvalidCapacityException;
 use Monolog\Logger;
 
 /**
@@ -80,8 +79,10 @@ class Analyzer
                         if ($trend === 'down' && $trendLength >= $minTrendLength) {
                             $finishPrice = $dataRow->candles[$mainColumn]->close;
                             $this->log->alert("DOWN -> UP", [$trendLength, $finishPrice / $startPrice]);
-                            echo "DOWN -> UP", PHP_EOL;
-                            $this->save($dataRow, $trendLength);
+                            if ($finishPrice / $startPrice < 0.97) {
+                                echo "DOWN -> UP", PHP_EOL;
+                                $this->save($dataRow, $trendLength);
+                            }
                         }
 
                         $trend = 'up';
@@ -93,8 +94,10 @@ class Analyzer
                         if ($trend === 'up' && $trendLength >= $minTrendLength) {
                             $finishPrice = $dataRow->candles[$mainColumn]->close;
                             $this->log->alert("UP -> DOWN", [$trendLength, $finishPrice / $startPrice]);
-                            echo "UP -> DOWN", PHP_EOL;
-                            $this->save($dataRow, $trendLength);
+                            if ($finishPrice / $startPrice > 1.03) {
+                                echo "UP -> DOWN", PHP_EOL;
+                                $this->save($dataRow, $trendLength);
+                            }
                         }
 
                         $trend = 'down';
@@ -112,11 +115,13 @@ class Analyzer
 
     private function save(DataRow $dataRow, $count)
     {
+        $count+=$count*4;
         $data = [];
-        for ($i = 0; $i < $count && $dataRow !== null; $i++) {
+        for ($i = 0; $i < $count && $dataRow->prev !== null; $i++) {
             array_push($data, $dataRow->candles[0]->close);
             $dataRow = $dataRow->prev;
-            fputcsv(STDOUT, [$i+1, $dataRow->candles[0]->start->getTimestamp(), $dataRow->candles[0]->close]);
+//            print_r($dataRow);
+            fputcsv(STDOUT, [$i+1, $dataRow->candles[0]->start->getTimestamp(), $dataRow->candles[0]->close], ";");
         }
         echo "-------------------", PHP_EOL;
     }
