@@ -151,6 +151,15 @@ class Analyzer
     {
         $exchangeStateSlice = new ExchangeStateSlice();
 
+        // Добавляем названия графиков
+        foreach ($dataRow->candles as $column => $candle) {
+            $exchangeStateSlice->seriesNames[$column] = $candle->label;
+        }
+
+        // Конец отчета
+        $finishTime = $dataRow->time;
+        $startTime = null;
+
         $exchangeStateSlice->series = array_fill(0, sizeof($dataRow->candles), []);
 
         // Копируем тренд
@@ -166,20 +175,25 @@ class Analyzer
 
         // Копируем период предшествывающий тренду
         if ($dataRow !== null) {
-            for ($i = 0; $i < $length * 4 && $dataRow->prev !== null; $i++) {
+            for ($i = 0; $i < $length * 4 && $dataRow !== null; $i++) {
                 foreach ($dataRow->candles as $column => $candle) {
                     array_push($exchangeStateSlice->series[$column], [
                         'start' => $candle->start->getTimestamp(),
                         'price' => $candle->close,
                     ]);
                 }
+
+                // Последний срез
+                if ($i === ($length * 4) - 1 || $dataRow->prev === null) {
+                    $startTime = $dataRow->time;
+                }
+
                 $dataRow = $dataRow->prev;
             }
         }
 
-        // TODO: Составить список названий графиков.
-
-        // TODO: Добавить title.
+        // Title
+        $exchangeStateSlice->title = "From " . $startTime->format('Y-m-d H:i:s e') . " to " . $finishTime->format('Y-m-d H:i:s e');
 
         $timestamps = [];
         foreach ($times as $time) {
