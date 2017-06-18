@@ -91,6 +91,7 @@ class CandleSource implements CandleEmitterInterface
     {
         $offset = 0;
         $limit = self::CHUNK_SIZE;
+        $skipCandles = $this->skipCandles;
 
         while (true) {
             /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
@@ -111,8 +112,8 @@ class CandleSource implements CandleEmitterInterface
 
             if (count($candles) > 0) {
                 foreach ($candles as $candle) {
-                    if ($this->skipCandles > 0) {
-                        $this->skipCandles--;
+                    if ($skipCandles > 0) {
+                        $skipCandles--;
                         continue;
                     }
                     yield $candle;

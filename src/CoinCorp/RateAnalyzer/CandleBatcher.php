@@ -80,6 +80,9 @@ class CandleBatcher implements CandleEmitterInterface
                     yield $bigCandle;
                 }
             }
+
+            // Clear cache
+            $this->cache = [];
         }
     }
 
