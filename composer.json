@@ -8,6 +8,10 @@
             "email": "iv.pushk@gmail.com"
         }
     ],
+    "bin": [
+        "bin/rate-analyzer.php",
+        "bin/correlation.php"
+    ],
     "autoload": {
         "psr-4": {
             "CoinCorp\\": "src/CoinCorp/"
