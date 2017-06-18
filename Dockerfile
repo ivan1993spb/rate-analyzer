@@ -8,4 +8,6 @@ WORKDIR /app
 
 VOLUME /app/data
 
+VOLUME /app/output
+
 ENTRYPOINT php /app/rate-analizer.php
