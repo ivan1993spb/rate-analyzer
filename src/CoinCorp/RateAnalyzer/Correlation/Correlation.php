@@ -37,38 +37,26 @@ class Correlation
 
     public function findCorrelation()
     {
-        $variablePerCandle = 4;
+        $variablePerCandle = 3;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
-        $variables = [
-            // Column 0
-            new CandleVariable('1_close', function(Candle $candle) {
-                return $candle->close;
-            }),
-            new CandleVariable('1_vwp', function(Candle $candle) {
-                return $candle->vwp;
-            }),
-            new CandleVariable('1_volume', function(Candle $candle) {
-                return $candle->volume;
-            }),
-            new CandleVariable('1_trades', function(Candle $candle) {
-                return $candle->trades;
-            }),
+        $variables = [];
 
-            // Column 1
-            new CandleVariable('2_close', function(Candle $candle) {
-                return $candle->close;
-            }),
-            new CandleVariable('2_vwp', function(Candle $candle) {
-                return $candle->vwp;
-            }),
-            new CandleVariable('2_volume', function(Candle $candle) {
-                return $candle->volume;
-            }),
-            new CandleVariable('2_trades', function(Candle $candle) {
-                return $candle->trades;
-            }),
-        ];
+        // Для каждой свечи добавляем три типа переменных
+        foreach ($this->aggregator->emittersNames() as $name) {
+            array_push(
+                $variables,
+                new CandleVariable($name.'_close', function(Candle $candle) {
+                    return $candle->close;
+                }),
+                new CandleVariable($name.'_volume', function(Candle $candle) {
+                    return $candle->volume;
+                }),
+                new CandleVariable($name.'_trades', function(Candle $candle) {
+                    return $candle->trades;
+                })
+            );
+        }
 
         // Return if nothing to analyze
         if ($this->aggregator->capacity() === 0) {
