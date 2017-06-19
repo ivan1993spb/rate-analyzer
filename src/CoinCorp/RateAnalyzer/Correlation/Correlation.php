@@ -5,6 +5,10 @@ namespace CoinCorp\RateAnalyzer\Correlation;
 use CoinCorp\RateAnalyzer\AggregatorInterface;
 use CoinCorp\RateAnalyzer\Candle;
 use Monolog\Logger;
+use PHPExcel;
+use PHPExcel_Cell;
+use PHPExcel_IOFactory;
+use PHPExcel_Style_Fill;
 
 /**
  * Class Correlation
@@ -130,28 +134,67 @@ class Correlation
             }
         }
 
-//        var_dump("means:", $means, "covsXYZ", $covsXYZ, "varS", $varS, "r", $R_XYZ);
-
         $this->log->info("R_XYZ", $R_XYZ);
 
-        echo PHP_EOL;
-        printf("%10s ", ' ');
-        foreach ($variables as $xi => $variableX) {
-            printf("%10s ", $variableX->name);
-        }
-        echo PHP_EOL;
-        foreach ($variables as $xi => $variableX) {
-            printf("%10s ", $variableX->name);
-            foreach ($variables as $yi => $variableY) {
-                if ($xi !== $yi) {
-                    printf("%10f ", $R_XYZ[$xi][$yi]);
-//                    var_dump($R_XYZ[$xi][$yi]);
-                } else {
-                    printf("%10s ", ' ');
-                }
-            }
-            echo PHP_EOL;
+        $this->log->info("Excel generation");
+
+        $ExcelPriceList = new PHPExcel();
+
+        $ExcelPriceList->setActiveSheetIndex(0);
+
+
+        foreach(range(0, sizeof($variables)) as $columnID) {
+            $columnIndex = PHPExcel_Cell::stringFromColumnIndex($columnID);
+            $ExcelPriceList->getActiveSheet()->getColumnDimension($columnIndex)->setAutoSize(true);
         }
 
+        $column = 1;
+        $row = 1;
+        foreach ($variables as $xi => $variableX) {
+            $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
+            $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $variableX->name);
+            $column += 1;
+        }
+
+        $row += 1;
+        $column = 0;
+
+        // Данные
+
+        foreach ($variables as $xi => $variableX) {
+            $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
+            $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $variableX->name);
+
+            $column += 1;
+
+            foreach ($variables as $yi => $variableY) {
+                if ($xi !== $yi) {
+                    $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
+                    $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $R_XYZ[$xi][$yi]);
+
+                    $absoluteValue = abs($R_XYZ[$xi][$yi]);
+
+                    if ($absoluteValue > 0.5) {
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'color' => array('rgb' => '00ff00')
+                                ]
+                            ]
+                        );
+                    }
+                }
+
+                $column += 1;
+            }
+
+            $column = 0;
+            $row += 1;
+        }
+
+
+        $objWriter = PHPExcel_IOFactory::createWriter($ExcelPriceList, 'Excel2007');
+        $objWriter->save('res.xlsx');
     }
 }
