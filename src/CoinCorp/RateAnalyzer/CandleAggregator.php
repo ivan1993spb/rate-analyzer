@@ -162,4 +162,17 @@ class CandleAggregator implements AggregatorInterface
             }
         }
     }
+
+    /**
+     * @return string[]
+     */
+    public function emittersNames()
+    {
+        /** @var string[] $names */
+        $names = [];
+        foreach ($this->candleEmitters as $emitter) {
+            array_push($names, $emitter->getName());
+        }
+        return $names;
+    }
 }

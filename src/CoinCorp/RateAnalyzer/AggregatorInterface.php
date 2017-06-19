@@ -18,4 +18,9 @@ interface AggregatorInterface
      * @return integer
      */
     public function capacity();
+
+    /**
+     * @return string[]
+     */
+    public function emittersNames();
 }
