@@ -8,13 +8,19 @@ return [
     // Pair to trade
     "trade-pair-name" => "usdt-btc",
 
+    // Candle size
+    "candle-size" => 2000,
+
     // Pairs sources to observe
-    "src" => [
-        [
-            new CandleSource("usdt-btc_poloniex", "data/01-15_04-17_usdt-btc_poloniex.db" , "table"),
-            new CandleSource("usdt-eth_poloniex", "data/01-15_04-17_usdt-eth_poloniex.db", "table"),
-            new CandleSource("btc-ltc_poloniex", "data/01-16_04-17_btc-ltc_poloniex.db", "table"),
-            new CandleSource("btc-eth_poloniex", "data/01-15_04-17_btc-eth_poloniex.db", "table"),
-        ]
-    ]
+    "sources" => [
+        new CandleSource("btc-xmr_poloniex", "data/01-16_04-17_btc-xmr_poloniex.db", "candles_BTC_XMR",
+            new DateTime(date('r', 1451606700), new DateTimeZone("UTC"))),
+        new CandleSource("btc-ltc_poloniex", "data/01-16_04-17_btc-ltc_poloniex.db", "candles_BTC_LTC",
+            new DateTime(date('r', 1451606700), new DateTimeZone("UTC"))),
+        new CandleSource("usdt-btc_poloniex", "data/01-15_04-17_usdt-btc_poloniex.db", "candles_USDT_BTC",
+            new DateTime(date('r', 1451606700), new DateTimeZone("UTC"))),
+    ],
+
+    // Сколько рядов свечей максимум может содержать кеш аггрегатора
+    "cache-size" => 1000,
 ];
