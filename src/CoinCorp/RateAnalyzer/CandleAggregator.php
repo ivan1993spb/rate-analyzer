@@ -116,7 +116,7 @@ class CandleAggregator implements AggregatorInterface
 
                 if (empty($currentTime) || $currentTime->getTimestamp() < $candle->start->getTimestamp()) {
                     $currentTime = $candle->start;
-                    $this->log->info("New time cursor", [$currentTime]);
+                    $this->log->info("New time cursor", [$candle->label, $currentTime]);
                     if ($column != 0) {
                         $column = 0;
                     }
