@@ -57,13 +57,13 @@ class CandleEmitterScanner
             if ($currentTime === null) {
                 // Текущее время не задано - первый запуск
                 $currentTime = $candle->start;
-                $this->log->info("Create time cursor", [$currentTime]);
+                $this->log->info("Create time cursor", ['currentTime' => $currentTime]);
                 // Первая свеча - начало первого периода
                 $startTime = clone $candle->start;
-                $this->log->info("Create time range start point", [$startTime]);
+                $this->log->info("Create time range start point", ['startTime' => $startTime]);
                 $finishTime = null;
                 $count += 1;
-                $this->log->info("Start time range number", [$count]);
+                $this->log->info("Start time range number", ['number' => $count]);
                 continue;
             }
 
@@ -71,13 +71,20 @@ class CandleEmitterScanner
 
             if ($currentTime->getTimestamp() > $candle->start->getTimestamp()) {
                 // Лишняя свеча
+                $this->log->warn("Invalid candle", ['start' => $candle->start]);
                 continue;
             }
 
             if ($currentTime->getTimestamp() < $candle->start->getTimestamp()) {
                 // Разрыв между свечами: фиксируем промежуток
                 $finishTime = $currentTime;
-                $this->log->info("Time range", [$count, $startTime, $finishTime]);
+                $duration = $startTime->diff($finishTime);
+                $this->log->info("Time range", [
+                    'number'     => $count,
+                    'duration'   => $duration->format('%Y-%m-%d %H:%i:%s'),
+                    'startTime'  => $startTime,
+                    'finishTime' => $finishTime,
+                ]);
                 $currentTime = null;
                 $startTime = null;
                 $finishTime = null;
