@@ -91,6 +91,6 @@ class CandleEmitterScanner
             }
         }
 
-        $this->log->info("Count", [$count]);
+        $this->log->info("Count", ['count' => $count]);
     }
 }
