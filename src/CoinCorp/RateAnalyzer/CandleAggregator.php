@@ -63,9 +63,11 @@ class CandleAggregator implements AggregatorInterface
         /** @var \CoinCorp\RateAnalyzer\Candle $firstCandle */
         $firstCandle = $generator->current();
 
-        $skipSeconds = $candleSize - $firstCandle->start->getTimestamp() % $candleSize;
-        $this->log->info("Seconds to skip", [$candleEmitter->getName(), $skipSeconds]);
-        $candleEmitter->skipSeconds($skipSeconds);
+        if ($firstCandle->start->getTimestamp() % $candleSize > 0) {
+            $skipSeconds = $candleSize - $firstCandle->start->getTimestamp() % $candleSize;
+            $this->log->info("Seconds to skip", [$candleEmitter->getName(), $skipSeconds]);
+            $candleEmitter->skipSeconds($skipSeconds);
+        }
 
         array_push($this->candleEmitters, $candleEmitter);
     }
