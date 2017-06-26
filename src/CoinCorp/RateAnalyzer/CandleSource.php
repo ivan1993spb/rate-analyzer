@@ -73,7 +73,10 @@ class CandleSource implements CandleEmitterInterface
         if (!is_file($path)) {
             throw new CandleSourceFileNotFoundException();
         }
-        $this->connection = new Connection(new PDO('sqlite:'.$path));
+        $pdo = new PDO('sqlite:'.$path);
+        // TODO: Add exception case for PDOException
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->connection = new Connection($pdo);
         $this->table = $table;
         $this->from = $from;
         $this->to = $to;
