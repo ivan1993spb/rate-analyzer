@@ -15,5 +15,8 @@
         <testsuite name="Test Correlation">
             <file>tests/CorrelationTest.php</file>
         </testsuite>
+        <testsuite name="Test Scanners">
+            <file>tests/CandleEmitterScannerTest.php</file>
+        </testsuite>
     </testsuites>
 </phpunit>

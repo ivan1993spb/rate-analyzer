@@ -18,6 +18,13 @@ $logger = new Logger('logger');
 foreach ($config['sources'] as $emitter) {
     if ($emitter instanceof CandleEmitterInterface) {
         $scanner = new CandleEmitterScanner($emitter, $logger);
-        $scanner->scan();
+        $generator = $scanner->scan();
+        if (!$generator->valid()) {
+            $logger->info("Ranges not found");
+        } else {
+            foreach ($scanner->scan() as $range) {
+                $logger->info("Range", ['start' => $range->start->format('r'), 'finish' => $range->finish->format('r')]);
+            }
+        }
     }
 }
