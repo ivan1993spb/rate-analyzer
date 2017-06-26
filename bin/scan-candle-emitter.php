@@ -22,7 +22,7 @@ foreach ($config['sources'] as $emitter) {
         if (!$generator->valid()) {
             $logger->info("Ranges not found");
         } else {
-            foreach ($scanner->scan() as $range) {
+            foreach ($generator as $range) {
                 $logger->info("Range", ['start' => $range->start->format('r'), 'finish' => $range->finish->format('r')]);
             }
         }
