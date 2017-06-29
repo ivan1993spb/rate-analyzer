@@ -6,32 +6,62 @@ require __DIR__.'/../vendor/autoload.php';
 use CoinCorp\RateAnalyzer\CandleEmitterInterface;
 use CoinCorp\RateAnalyzer\Scanners\CandleEmitterScanner;
 use Commando\Command;
+use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 
 $cmd = new Command();
 $cmd->option('c')->aka('config')->describedAs('Config file')->required()->file();
+$cmd->option('j')->aka('json')->describedAs('Output json')->boolean();
 
 $config = require $cmd['config'];
 
-$logger = new Logger('logger');
+if ($cmd['json']) {
+    $sources = [];
+    $logger = new Logger('logger');
+    $logger->pushHandler(new NullHandler());
 
-foreach ($config['sources'] as $emitter) {
-    if ($emitter instanceof CandleEmitterInterface) {
-        $scanner = new CandleEmitterScanner($emitter, $logger);
-        $generator = $scanner->scan();
-        if (!$generator->valid()) {
-            $logger->info("Ranges not found");
-        } else {
-            $count = 0;
-            foreach ($generator as $range) {
-                $count += 1;
-                $logger->info("Range", [
-                    'start'    => $range->start->format('r'),
-                    'finish'   => $range->finish->format('r'),
-                    'duration' => sprintf("%dm", floor($range->finish->getTimestamp() - $range->start->getTimestamp()) / 60),
+    foreach ($config['sources'] as $emitter) {
+        if ($emitter instanceof CandleEmitterInterface) {
+            $scanner = new CandleEmitterScanner($emitter, $logger);
+
+            $ranges = [];
+
+            foreach ($scanner->scan() as $range) {
+                array_push($ranges, [
+                    'start'  => $range->start->getTimestamp(),
+                    'finish' => $range->finish->getTimestamp(),
                 ]);
             }
-            $logger->info("Range number", ['count' => $count]);
+
+            array_push($sources, [
+                'name'   => $emitter->getName(),
+                'ranges' => $ranges,
+            ]);
+        }
+    }
+
+    echo json_encode($sources);
+} else {
+    $logger = new Logger('logger');
+
+    foreach ($config['sources'] as $emitter) {
+        if ($emitter instanceof CandleEmitterInterface) {
+            $scanner = new CandleEmitterScanner($emitter, $logger);
+            $generator = $scanner->scan();
+            if ($generator->valid()) {
+                $count = 0;
+                foreach ($generator as $range) {
+                    $count += 1;
+                    $logger->info("Range", [
+                        'start'    => $range->start->format('r'),
+                        'finish'   => $range->finish->format('r'),
+                        'duration' => sprintf("%dh", floor(($range->finish->getTimestamp() - $range->start->getTimestamp()) / 3600)),
+                    ]);
+                }
+                $logger->info("Range number", ['count' => $count]);
+            } else {
+                $logger->info("Ranges not found");
+            }
         }
     }
 }
