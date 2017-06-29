@@ -22,9 +22,16 @@ foreach ($config['sources'] as $emitter) {
         if (!$generator->valid()) {
             $logger->info("Ranges not found");
         } else {
+            $count = 0;
             foreach ($generator as $range) {
-                $logger->info("Range", ['start' => $range->start->format('r'), 'finish' => $range->finish->format('r')]);
+                $count += 1;
+                $logger->info("Range", [
+                    'start'    => $range->start->format('r'),
+                    'finish'   => $range->finish->format('r'),
+                    'duration' => sprintf("%dm", floor($range->finish->getTimestamp() - $range->start->getTimestamp()) / 60),
+                ]);
             }
+            $logger->info("Range number", ['count' => $count]);
         }
     }
 }
