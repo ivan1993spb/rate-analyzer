@@ -12,6 +12,8 @@ use Monolog\Logger;
 
 $cmd = new Command();
 $cmd->option('c')->aka('config')->describedAs('Config file')->required()->file();
+$cmd->option('o')->aka('output-xlsx')->describedAs('Output XLSX file name')->required();
+$cmd->option('e')->aka('extended')->describedAs('Generate extended correlation table')->boolean()->default(false);
 
 $config = require $cmd['config'];
 
@@ -28,5 +30,8 @@ foreach ($config['sources'] as $source) {
     }
 }
 
-$corr = new Correlation($aggregator, $logger);
+$XLSXFile = $cmd['output-xlsx'];
+$extended = $cmd['extended'];
+
+$corr = new Correlation($aggregator, $logger, $XLSXFile, $extended);
 $corr->findCorrelation();

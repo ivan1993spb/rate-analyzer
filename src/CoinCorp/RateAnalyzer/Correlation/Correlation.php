@@ -28,20 +28,34 @@ class Correlation
     private $log;
 
     /**
+     * @var string
+     */
+    private $XLSXFile;
+
+    /**
+     * @var boolean
+     */
+    private $extended;
+
+    /**
      * Analyzer constructor.
      *
      * @param \CoinCorp\RateAnalyzer\AggregatorInterface $aggregator
      * @param \Monolog\Logger                            $log
+     * @param string                                     $XLSXFile
+     * @param bool                                       $extended
      */
-    public function __construct(AggregatorInterface $aggregator, Logger $log)
+    public function __construct(AggregatorInterface $aggregator, Logger $log, $XLSXFile, $extended = false)
     {
         $this->aggregator = $aggregator;
         $this->log = $log;
+        $this->XLSXFile = $XLSXFile;
+        $this->extended = $extended;
     }
 
     public function findCorrelation()
     {
-        $variablePerCandle = 3;
+        $variablePerCandle = $this->extended ? 3 : 1;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
         $variables = [];
@@ -52,14 +66,20 @@ class Correlation
                 $variables,
                 new CandleVariable($name.'_close', function(Candle $candle) {
                     return $candle->close;
-                }),
-                new CandleVariable($name.'_volume', function(Candle $candle) {
-                    return $candle->volume;
-                }),
-                new CandleVariable($name.'_trades', function(Candle $candle) {
-                    return $candle->trades;
                 })
             );
+
+            if ($this->extended) {
+                array_push(
+                    $variables,
+                    new CandleVariable($name.'_volume', function(Candle $candle) {
+                        return $candle->volume;
+                    }),
+                    new CandleVariable($name.'_trades', function(Candle $candle) {
+                        return $candle->trades;
+                    })
+                );
+            }
         }
 
         // Return if nothing to analyze
@@ -195,6 +215,6 @@ class Correlation
 
 
         $objWriter = PHPExcel_IOFactory::createWriter($ExcelPriceList, 'Excel2007');
-        $objWriter->save('res.xlsx');
+        $objWriter->save($this->XLSXFile);
     }
 }
