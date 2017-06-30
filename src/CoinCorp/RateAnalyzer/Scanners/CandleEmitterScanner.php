@@ -43,7 +43,10 @@ class CandleEmitterScanner
     {
         $candleSize = $this->candleEmitter->getCandleSize();
         $candleInterval = new DateInterval(sprintf("PT%dS", $candleSize));
-        $this->log->info("Start scanning candle emitter", [$this->candleEmitter->getName(), $candleSize]);
+        $this->log->info("Start scanning candle emitter", [
+            'name'        => $this->candleEmitter->getName(),
+            'candle_size' => $candleSize
+        ]);
 
         $candleGenerator = $this->candleEmitter->candles();
 
