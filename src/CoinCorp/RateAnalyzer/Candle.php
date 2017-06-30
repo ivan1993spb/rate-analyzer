@@ -25,6 +25,13 @@ class Candle
     public $start;
 
     /**
+     * Seconds
+     *
+     * @var integer
+     */
+    public $duration;
+
+    /**
      * @var float
      */
     public $open;
@@ -66,6 +73,7 @@ class Candle
      *
      * @param string    $label
      * @param \DateTime $start
+     * @param integer   $duration Seconds
      * @param float     $open
      * @param float     $high
      * @param float     $low
@@ -74,10 +82,11 @@ class Candle
      * @param float     $volume
      * @param integer   $trades
      */
-    public function __construct($label, DateTime $start, $open, $high, $low, $close, $vwp, $volume, $trades)
+    public function __construct($label, DateTime $start, $duration, $open, $high, $low, $close, $vwp, $volume, $trades)
     {
         $this->label = $label;
         $this->start = $start;
+        $this->duration = $duration;
         $this->open = $open;
         $this->high = $high;
         $this->low = $low;
@@ -88,11 +97,12 @@ class Candle
     }
 
     /**
-     * @param string $label
-     * @param array $arr
+     * @param string  $label
+     * @param integer $duration
+     * @param array   $arr
      * @return self
      */
-    public static function fromArray($label, array $arr)
+    public static function fromArray($label, $duration, array $arr)
     {
         $start = new DateTime();
         $start->setTimezone(new DateTimeZone('UTC'));
@@ -112,6 +122,6 @@ class Candle
         $volume = array_key_exists('volume', $arr) ? floatval($arr['volume']) : 0.0;
         $trades = array_key_exists('trades', $arr) ? intval($arr['trades']) : 0;
 
-        return new self($label, $start, $open, $high, $low, $close, $vwp, $volume, $trades);
+        return new self($label, $start, $duration, $open, $high, $low, $close, $vwp, $volume, $trades);
     }
 }

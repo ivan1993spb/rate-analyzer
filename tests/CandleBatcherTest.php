@@ -36,10 +36,10 @@ class CandleBatcherTest extends TestCase
     public function testSameBatchSizeReturnsSameCandles()
     {
         $candles = [
-            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
-            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
-            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
-            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), 60, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), 60, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), 60, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
         ];
 
         $source = new CandleSourceMock("mock", $candles);
@@ -56,5 +56,227 @@ class CandleBatcherTest extends TestCase
             $iterations++;
         }
         $this->assertEquals(count($candles), $iterations, "Invalid iteration number");
+    }
+
+    public function testBatcherGeneratesCandlesWithValidDuration()
+    {
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), 60, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), 60, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), 60, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $source = new CandleSourceMock("mock", $candles);
+        $batcher = new CandleBatcher($source, 2);
+
+        $batcherGenerator = $batcher->candles();
+
+        $this->assertTrue($batcherGenerator->valid());
+
+        foreach ($batcherGenerator as $candle) {
+            $this->assertEquals($batcher->getCandleSize(), $candle->duration);
+        }
+    }
+
+    public function testCandleMergeReturnsCandleWithValidSize()
+    {
+        $duration = 60;
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $this->assertEquals($duration * sizeof($candles), $candle->duration);
+    }
+
+    public function testCandleMergeReturnedCandleStartsWithValidTime()
+    {
+        $duration = 60;
+        $startTime = new DateTime("Sun, 11 Jun 2017 09:20:00 +0000");
+        $candles = [
+            new Candle("mock", $startTime, $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $this->assertEquals($startTime, $candle->start);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidOpen()
+    {
+        $duration = 60;
+
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $this->assertEquals(1.0, $candle->open);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidClose()
+    {
+        $duration = 60;
+
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $this->assertEquals(2.2, $candle->close);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidHigh()
+    {
+        $duration = 60;
+
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $this->assertEquals(5.0, $candle->high);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidLow()
+    {
+        $duration = 60;
+
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $this->assertEquals(0.1, $candle->low);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidVolume()
+    {
+        $duration = 60;
+
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $volume = 0;
+        foreach ($candles as $c) {
+            $volume += $c->volume;
+        }
+
+        $this->assertEquals($volume, $candle->volume);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidCountOfTrades()
+    {
+        $duration = 60;
+
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), $duration, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:21:00 +0000"), $duration, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), $duration, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), $duration, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $class = new ReflectionClass(CandleBatcher::class);
+        $method = $class->getMethod('mergeCandles');
+        $method->setAccessible(true);
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", []), 4);
+        /** @var \CoinCorp\RateAnalyzer\Candle $candle */
+        $candle = $method->invokeArgs($batcher, [$candles]);
+
+        $trades = 0;
+        foreach ($candles as $c) {
+            $trades += $c->trades;
+        }
+
+        $this->assertEquals($trades, $candle->trades);
+    }
+
+    public function testCandleMergeReturnedCandleHasValidVWP()
+    {
+        // TODO: Implement test for VWP.
+    }
+
+    public function testBrokenCandleStream()
+    {
+        $candles = [
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:20:00 +0000"), 60, 1.0, 2.0, 0.5, 0.2, 1.1, 9.5, 5),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:22:00 +0000"), 60, 0.2, 3.0, 0.1, 0.8, 1.1, 7.5, 6),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:23:00 +0000"), 60, 0.8, 1.0, 0.5, 0.3, 1.1, 3.5, 4),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:24:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+        ];
+
+        $batcher = new CandleBatcher(new CandleSourceMock("mock", $candles), 2);
+
+        $count = 0;
+        foreach ($batcher->candles() as $candle) {
+            $count++;
+        }
+
+        $this->assertEquals(3, $count);
     }
 }

@@ -110,7 +110,7 @@ class CandleSource implements CandleEmitterInterface
                 $query->where('start', '<', $this->to->getTimestamp());
             }
             $query->get()->each(function ($raw) use (&$candles) {
-                array_push($candles, Candle::fromArray($this->name, (array)$raw));
+                array_push($candles, Candle::fromArray($this->name, $this->getCandleSize(), (array)$raw));
             });
 
             if (count($candles) > 0) {
