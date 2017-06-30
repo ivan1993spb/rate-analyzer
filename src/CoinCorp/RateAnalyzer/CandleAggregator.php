@@ -57,7 +57,7 @@ class CandleAggregator implements AggregatorInterface
 
         $generator = $candleEmitter->candles();
         if (!$generator->valid()) {
-            throw new ClosedCandleEmitterException();
+            throw new ClosedCandleEmitterException($candleEmitter->getName());
         }
 
         /** @var \CoinCorp\RateAnalyzer\Candle $firstCandle */
