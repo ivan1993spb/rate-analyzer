@@ -28,7 +28,7 @@ class CandleEmitterScanner
      * CandleEmitterScanner constructor.
      *
      * @param \CoinCorp\RateAnalyzer\CandleEmitterInterface $candleEmitter
-     * @param \Monolog\Logger $log
+     * @param \Monolog\Logger                               $log
      */
     public function __construct(CandleEmitterInterface $candleEmitter, Logger $log)
     {
