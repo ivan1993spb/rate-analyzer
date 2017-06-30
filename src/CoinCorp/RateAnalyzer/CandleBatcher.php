@@ -54,8 +54,8 @@ class CandleBatcher implements CandleEmitterInterface
                 /** @var \DateTime $currentTime */
                 $currentTime = clone $generator->current()->start;
 
-                // Интервал маленьких свечей
-                $smallCandleInterval = new DateInterval(sprintf("PT%dS", $this->candleEmitter->getCandleSize()));
+                // Интервал большой свечей
+                $bigCandleInterval = new DateInterval(sprintf("PT%dS", $this->getCandleSize()));
 
                 /** @var \CoinCorp\RateAnalyzer\Candle[] $cache */
                 $cache = [];
@@ -64,19 +64,24 @@ class CandleBatcher implements CandleEmitterInterface
                     /** @var \CoinCorp\RateAnalyzer\Candle $candle */
                     $candle = $generator->current();
 
-                    if (sizeof($cache) === $this->batchSize || ($currentTime->getTimestamp() < $candle->start->getTimestamp() && sizeof($cache) > 0)) {
-                        yield $this->mergeCandles($cache);
+                    if (sizeof($cache) === $this->batchSize || ($currentTime->getTimestamp() + $this->getCandleSize() <= $candle->start->getTimestamp() && sizeof($cache) > 0)) {
+                        $bigCandle = $this->mergeCandles($cache);
+                        $bigCandle->start = clone $currentTime;
+                        yield $bigCandle;
+
                         $cache = [];
-                        $currentTime = clone $candle->start;
+                        $currentTime->add($bigCandleInterval);
                     }
 
                     array_push($cache, $candle);
 
                     $generator->next();
-                    if ($generator->valid()) {
-                        $currentTime->add($smallCandleInterval);
-                    } else {
-                        yield $this->mergeCandles($cache);
+                    if (!$generator->valid()) {
+                        if (sizeof($cache) > 0) {
+                            $bigCandle = $this->mergeCandles($cache);
+                            $bigCandle->start = clone $currentTime;
+                            yield $bigCandle;
+                        }
                         break;
                     }
                 }
