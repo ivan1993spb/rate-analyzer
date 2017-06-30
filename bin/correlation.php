@@ -11,22 +11,30 @@ use Commando\Command;
 use Monolog\Logger;
 
 $cmd = new Command();
-$cmd->option('c')->aka('config')->describedAs('Config file')->required()->file();
+
+$cmd->setHelp('Calculate correlation and generate XLSX table');
+
+$cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
 $cmd->option('o')->aka('output-xlsx')->describedAs('Output XLSX file name')->required();
 $cmd->option('e')->aka('extended')->describedAs('Generate extended correlation table')->boolean()->default(false);
+$cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
+    return is_numeric($value) && $value > 0;
+});
 
-$config = require $cmd['config'];
+$sources = require $cmd['sources'];
 
 $logger = new Logger('logger');
-$aggregator = new CandleAggregator($logger, (integer)$config['cache-size']);
+$aggregator = new CandleAggregator($logger);
 
-foreach ($config['sources'] as $source) {
+foreach ($sources as $source) {
     if ($source instanceof CandleSource) {
-        if ($config['candle-size'] > 1) {
-            $aggregator->addCandleEmitter(new CandleBatcher($source, (integer)$config['candle-size']));
+        if ($cmd['batch-size'] > 1) {
+            $aggregator->addCandleEmitter(new CandleBatcher($source, (integer)$cmd['batch-size']));
         } else {
             $aggregator->addCandleEmitter($source);
         }
+    } else {
+        $logger->warn('Invalid source type', ['source' => $source]);
     }
 }
 
