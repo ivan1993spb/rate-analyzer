@@ -258,6 +258,7 @@ class CandleBatcherTest extends TestCase
 
     public function testCandleMergeReturnedCandleHasValidVWP()
     {
+        $this->markTestSkipped();
         // TODO: Implement test for VWP.
     }
 

@@ -13,7 +13,7 @@
             <file>tests/CandleAggregatorTest.php</file>
         </testsuite>
         <testsuite name="Test Correlation">
-            <file>tests/CorrelationTest.php</file>
+            <!--<file>tests/CorrelationTest.php</file>-->
         </testsuite>
         <testsuite name="Test Scanners">
             <file>tests/CandleEmitterScannerTest.php</file>
