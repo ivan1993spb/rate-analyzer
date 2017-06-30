@@ -16,6 +16,8 @@ $cmd->option('j')->aka('json')->describedAs('Output json')->boolean();
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
 
+// TODO: Добавить опцию batch-size.
+
 if ($cmd['json']) {
     $sources = [];
     $logger = new Logger('logger');
