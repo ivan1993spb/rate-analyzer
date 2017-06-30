@@ -10,17 +10,18 @@ use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 
 $cmd = new Command();
-$cmd->option('c')->aka('config')->describedAs('Config file')->required()->file();
+$cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
 $cmd->option('j')->aka('json')->describedAs('Output json')->boolean();
 
-$config = require $cmd['config'];
+/** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
+$sources = require $cmd['sources'];
 
 if ($cmd['json']) {
     $sources = [];
     $logger = new Logger('logger');
     $logger->pushHandler(new NullHandler());
 
-    foreach ($config['sources'] as $emitter) {
+    foreach ($sources as $emitter) {
         if ($emitter instanceof CandleEmitterInterface) {
             $scanner = new CandleEmitterScanner($emitter, $logger);
 
@@ -44,7 +45,7 @@ if ($cmd['json']) {
 } else {
     $logger = new Logger('logger');
 
-    foreach ($config['sources'] as $emitter) {
+    foreach ($sources as $emitter) {
         if ($emitter instanceof CandleEmitterInterface) {
             $scanner = new CandleEmitterScanner($emitter, $logger);
             $generator = $scanner->scan();
