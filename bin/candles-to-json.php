@@ -13,22 +13,25 @@ use Monolog\Logger;
 $cmd = new Command();
 $cmd->setHelp('Generates JSON file with last candles');
 
-$cmd->option('c')->aka('config')->describedAs('Config file')->required()->file();
+$cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
 $cmd->option('o')->aka('output')->describedAs('Output JSON file name')->required();
 $cmd->option('n')->aka('candles-number')->describedAs('Candles count to JSON output')->required()->must(function($number) {
     return intval($number) > 0;
 })->cast(function($number) {
     return intval($number);
 });
+$cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
+    return is_numeric($value) && $value > 0;
+});
 
 $logger = new Logger('logger');
-$aggregator = new CandleAggregator($logger, $cmd['candles-number']);
-$config = require $cmd['config'];
+$aggregator = new CandleAggregator($logger, (integer)$cmd['candles-number']);
+$sources = require $cmd['sources'];
 
-foreach ($config['sources'] as $source) {
+foreach ($sources as $source) {
     if ($source instanceof CandleSource) {
-        if ($config['candle-size'] > 1) {
-            $aggregator->addCandleEmitter(new CandleBatcher($source, (integer)$config['candle-size']));
+        if ($cmd['batch-size'] > 1) {
+            $aggregator->addCandleEmitter(new CandleBatcher($source, (integer)$cmd['batch-size']));
         } else {
             $aggregator->addCandleEmitter($source);
         }
@@ -40,6 +43,8 @@ $dataRow = null;
 
 foreach ($aggregator->rows() as $dataRow) {
 }
+
+// Составляем отчет
 
 $exchangeStateSlice = new ExchangeStateSlice();
 
@@ -66,11 +71,11 @@ for ($i = 0; $dataRow !== null; $i++) {
 
     if ($dataRow->prev === null) {
         $startTime = $dataRow->time;
+        break;
     } else {
         $dataRow = $dataRow->prev;
     }
 }
-
 
 // Title
 $exchangeStateSlice->title = "From " . $startTime->format('Y-m-d H:i:s e') . " to " . $finishTime->format('Y-m-d H:i:s e');
