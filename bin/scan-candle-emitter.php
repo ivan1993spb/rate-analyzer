@@ -11,7 +11,8 @@ use Monolog\Logger;
 
 $cmd = new Command();
 $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
-$cmd->option('j')->aka('json')->describedAs('Output json')->boolean();
+$cmd->option('j')->aka('json')->describedAs('Output as JSON')->boolean();
+$cmd->option('m')->aka('md')->describedAs('Output as markdown')->boolean();
 
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
@@ -19,7 +20,7 @@ $sources = require $cmd['sources'];
 // TODO: Добавить опцию batch-size.
 
 if ($cmd['json']) {
-    $sources = [];
+    $output = [];
     $logger = new Logger('logger');
     $logger->pushHandler(new NullHandler());
 
@@ -36,14 +37,53 @@ if ($cmd['json']) {
                 ]);
             }
 
-            array_push($sources, [
+            array_push($output, [
                 'name'   => $emitter->getName(),
                 'ranges' => $ranges,
             ]);
         }
     }
 
-    echo json_encode($sources);
+    echo json_encode($output);
+} elseif ($cmd['md']) {
+    $logger = new Logger('logger');
+    $logger->pushHandler(new NullHandler());
+
+    echo "\n";
+    echo "# Candle ranges\n";
+    echo "\n";
+
+    $sourceCount = 0;
+
+    foreach ($sources as $emitter) {
+        if ($emitter instanceof CandleEmitterInterface) {
+            $sourceCount++;
+
+            $scanner = new CandleEmitterScanner($emitter, $logger);
+
+            $ranges = [];
+            echo "## ", $emitter->getName(), "\n";
+            echo "\n";
+
+            $generator = $scanner->scan();
+            if ($generator->valid()) {
+                $count = 0;
+                foreach ($generator as $range) {
+                    $count++;
+                    printf("* Range **%dh**: from `%s` to `%s`\n", floor(($range->finish->getTimestamp()-$range->start->getTimestamp()) / 3600),
+                        $range->start->format('r'), $range->finish->format('r'));
+                }
+                echo "\n";
+                echo $count, " ranges\n";
+            } else {
+                echo "No ranges\n";
+            }
+            echo "\n";
+        }
+    }
+
+    echo "---\n";
+    echo "**", $sourceCount, " sources**\n";
 } else {
     $logger = new Logger('logger');
 
