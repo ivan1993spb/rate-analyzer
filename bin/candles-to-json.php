@@ -14,18 +14,24 @@ $cmd = new Command();
 $cmd->setHelp('Generates JSON file with last candles');
 
 $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
-$cmd->option('o')->aka('output')->describedAs('Output JSON file name')->required();
-$cmd->option('n')->aka('candles-number')->describedAs('Candles count to JSON output')->required()->must(function($number) {
-    return intval($number) > 0;
-})->cast(function($number) {
-    return intval($number);
-});
+$cmd->option('o')->aka('output')->describedAs('Output JSON file name')->default('php://stdout');
 $cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
     return is_numeric($value) && $value > 0;
 });
+$cmd->option('from')->describedAs('Time UTC')->default(new DateTime("0001-01-01", new DateTimeZone('UTC')))->cast(function($value) {
+    return new DateTime($value, new DateTimeZone('UTC'));
+});
+$cmd->option('to')->describedAs('Time UTC')->default(new DateTime('now', new DateTimeZone('UTC')))->cast(function($value) {
+    return new DateTime($value, new DateTimeZone('UTC'));
+});
+
+/** @var \DateTime $from */
+$from = $cmd['from'];
+/** @var \DateTime $to */
+$to = $cmd['to'];
 
 $logger = new Logger('logger');
-$aggregator = new CandleAggregator($logger, (integer)$cmd['candles-number']);
+$aggregator = new CandleAggregator($logger);
 $sources = require $cmd['sources'];
 
 foreach ($sources as $source) {
@@ -38,30 +44,46 @@ foreach ($sources as $source) {
     }
 }
 
-/** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
-$dataRow = null;
+// Составляем отчет
+$exchangeStateSlice = new ExchangeStateSlice();
 
-foreach ($aggregator->rows() as $dataRow) {
+$generator = $aggregator->rows();
+if (!$generator->valid()) {
+    exit;
 }
 
-// Составляем отчет
-
-$exchangeStateSlice = new ExchangeStateSlice();
+/** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+$dataRow = $generator->current();
 
 // Добавляем названия графиков
 foreach ($dataRow->candles as $column => $candle) {
     $exchangeStateSlice->seriesNames[$column] = $candle->label;
 }
 
-// Конец отчета
-$finishTime = $dataRow->time;
+$exchangeStateSlice->series = array_fill(0, sizeof($dataRow->candles), []);
+
 /** @var \DateTime|null $startTime */
 $startTime = null;
 
-$exchangeStateSlice->series = array_fill(0, sizeof($dataRow->candles), []);
+/** @var \DateTime|null $finishTime */
+$finishTime = null;
 
 // Копируем тренд
-for ($i = 0; $dataRow !== null; $i++) {
+foreach ($generator as $dataRow) {
+    if ($dataRow->time->getTimestamp() < $from->getTimestamp()) {
+        continue;
+    }
+    if ($dataRow->time->getTimestamp() > $to->getTimestamp()) {
+        break;
+    }
+
+    if ($startTime === null) {
+        $startTime = clone $dataRow->time;
+        if ($startTime->getTimestamp() !== $from->getTimestamp()) {
+            $logger->warn("Start time after from", ['startTime' => $startTime, 'fromTime' => $from]);
+        }
+    }
+
     foreach ($dataRow->candles as $column => $candle) {
         array_push($exchangeStateSlice->series[$column], [
             'start' => $candle->start->getTimestamp(),
@@ -69,12 +91,11 @@ for ($i = 0; $dataRow !== null; $i++) {
         ]);
     }
 
-    if ($dataRow->prev === null) {
-        $startTime = $dataRow->time;
-        break;
-    } else {
-        $dataRow = $dataRow->prev;
-    }
+    $finishTime = clone $dataRow->time;
+}
+
+if ($finishTime->getTimestamp() !== $to->getTimestamp()) {
+    $logger->warn("Finish time before to", ['finishTime' => $finishTime, 'toTome' => $to]);
 }
 
 // Title
