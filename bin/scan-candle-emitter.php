@@ -66,15 +66,18 @@ if ($cmd['json']) {
             echo "\n";
 
             $generator = $scanner->scan();
+            $duration = 0;
             if ($generator->valid()) {
                 $count = 0;
                 foreach ($generator as $range) {
                     $count++;
-                    printf("* Range **%dh**: from `%s` to `%s`\n", floor(($range->finish->getTimestamp()-$range->start->getTimestamp()) / 3600),
+                    $rangeDuration = $range->finish->getTimestamp() - $range->start->getTimestamp();
+                    $duration += $rangeDuration;
+                    printf("* Range **%dh**: from `%s` to `%s`\n", floor($rangeDuration / 3600),
                         $range->start->format('r'), $range->finish->format('r'));
                 }
                 echo "\n";
-                echo $count, " ranges\n";
+                printf("**%d** ranges, duration **%dh**\n", $count, floor($duration / 3600));
             } else {
                 echo "No ranges\n";
             }
