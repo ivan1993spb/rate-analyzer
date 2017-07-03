@@ -57,8 +57,6 @@ if ($cmd['json']) {
     echo "\n";
     echo "# Candle ranges\n";
     echo "\n";
-    printf("Candle size = %d\n", (integer)$cmd['batch-size']);
-    echo "\n";
 
     $sourceCount = 0;
 
@@ -74,6 +72,8 @@ if ($cmd['json']) {
 
             $ranges = [];
             echo "## ", $emitter->getName(), "\n";
+            echo "\n";
+            printf("Candle size = %d seconds\n", $emitter->getCandleSize());
             echo "\n";
 
             $generator = $scanner->scan();
