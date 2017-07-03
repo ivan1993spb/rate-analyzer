@@ -3,29 +3,33 @@
 
 require __DIR__.'/../vendor/autoload.php';
 
+use CoinCorp\RateAnalyzer\CandleBatcher;
 use CoinCorp\RateAnalyzer\CandleEmitterInterface;
 use CoinCorp\RateAnalyzer\Scanners\CandleEmitterScanner;
 use Commando\Command;
-use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 
 $cmd = new Command();
 $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
 $cmd->option('j')->aka('json')->describedAs('Output as JSON')->boolean();
 $cmd->option('m')->aka('md')->describedAs('Output as markdown')->boolean();
+$cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
+    return is_numeric($value) && $value > 0;
+});
 
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
 
-// TODO: Добавить опцию batch-size.
-
 if ($cmd['json']) {
     $output = [];
     $logger = new Logger('logger');
-    $logger->pushHandler(new NullHandler());
 
     foreach ($sources as $emitter) {
         if ($emitter instanceof CandleEmitterInterface) {
+            if ($cmd['batch-size'] > 1) {
+                $emitter = new CandleBatcher($emitter, (integer)$cmd['batch-size']);
+            }
+
             $scanner = new CandleEmitterScanner($emitter, $logger);
 
             $ranges = [];
@@ -41,22 +45,29 @@ if ($cmd['json']) {
                 'name'   => $emitter->getName(),
                 'ranges' => $ranges,
             ]);
+        } else {
+            $logger->warn("Invalid source type");
         }
     }
 
     echo json_encode($output);
 } elseif ($cmd['md']) {
     $logger = new Logger('logger');
-    $logger->pushHandler(new NullHandler());
 
     echo "\n";
     echo "# Candle ranges\n";
+    echo "\n";
+    printf("Candle size = %d\n", (integer)$cmd['batch-size']);
     echo "\n";
 
     $sourceCount = 0;
 
     foreach ($sources as $emitter) {
         if ($emitter instanceof CandleEmitterInterface) {
+            if ($cmd['batch-size'] > 1) {
+                $emitter = new CandleBatcher($emitter, (integer)$cmd['batch-size']);
+            }
+
             $sourceCount++;
 
             $scanner = new CandleEmitterScanner($emitter, $logger);
@@ -82,6 +93,8 @@ if ($cmd['json']) {
                 echo "No ranges\n";
             }
             echo "\n";
+        } else {
+            $logger->warn("Invalid source type");
         }
     }
 
@@ -92,6 +105,10 @@ if ($cmd['json']) {
 
     foreach ($sources as $emitter) {
         if ($emitter instanceof CandleEmitterInterface) {
+            if ($cmd['batch-size'] > 1) {
+                $emitter = new CandleBatcher($emitter, (integer)$cmd['batch-size']);
+            }
+
             $scanner = new CandleEmitterScanner($emitter, $logger);
             $generator = $scanner->scan();
             if ($generator->valid()) {
@@ -108,6 +125,8 @@ if ($cmd['json']) {
             } else {
                 $logger->info("Ranges not found");
             }
+        } else {
+            $logger->warn("Invalid source type");
         }
     }
 }
