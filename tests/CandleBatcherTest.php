@@ -296,6 +296,22 @@ class CandleBatcherTest extends TestCase
 //            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:41:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
             new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:42:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
 //            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:43:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:44:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:45:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:46:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:47:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:48:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:49:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:50:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:51:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+//            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:52:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:53:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:54:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
+            new Candle("mock", new DateTime("Sun, 11 Jun 2017 09:55:00 +0000"), 60, 0.3, 5.0, 0.2, 2.2, 1.1, 8.0, 7),
         ];
 
         $batcher = new CandleBatcher(new CandleSourceMock("mock", $candles), 3);
@@ -305,6 +321,6 @@ class CandleBatcherTest extends TestCase
             $count++;
         }
 
-        $this->assertEquals(8, $count);
+        $this->assertEquals(9, $count);
     }
 }

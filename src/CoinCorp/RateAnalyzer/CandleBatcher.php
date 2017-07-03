@@ -70,12 +70,16 @@ class CandleBatcher implements CandleEmitterInterface
                         yield $bigCandle;
 
                         $cache = [];
-                        $currentTime->add($bigCandleInterval);
+
+                        do {
+                            $currentTime->add($bigCandleInterval);
+                        } while ($currentTime->getTimestamp() + $this->getCandleSize() <= $candle->start->getTimestamp());
                     }
 
                     array_push($cache, $candle);
 
                     $generator->next();
+
                     if (!$generator->valid()) {
                         if (sizeof($cache) > 0) {
                             $bigCandle = $this->mergeCandles($cache);
