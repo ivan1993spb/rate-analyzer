@@ -34,7 +34,7 @@ foreach ($sources as $emitter) {
         foreach ($emitter->candles() as $candle) {
         }
 
-        printf("* `%s` - **%s** - `%f`\n", $candle->start->format('r'), $emitter->getName(), $candle->close);
+        printf("* `%s` - **%s** - `%f`\n", $candle->start->format('r'), $emitter->getName(), $candle->open);
     } else {
         $logger->warn("Invalid source type");
     }
