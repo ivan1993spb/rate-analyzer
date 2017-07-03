@@ -44,3 +44,16 @@ if (!function_exists("trader_errno")) {
         return 0;
     }
 }
+
+if (!function_exists("trader_ema")) {
+    /**
+     * @param array   $real
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/ru/function.trader-ema.php
+     */
+    function trader_ema ($real, $timePeriod)
+    {
+        return false;
+    }
+}

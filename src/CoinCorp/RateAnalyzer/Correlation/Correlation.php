@@ -55,7 +55,7 @@ class Correlation
 
     public function findCorrelation()
     {
-        $variablePerCandle = $this->extended ? 3 : 1;
+        $variablePerCandle = $this->extended ? 5 : 3;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
         $variables = [];
@@ -66,6 +66,44 @@ class Correlation
                 $variables,
                 new CandleVariable($name.'_close', function(Candle $candle) {
                     return $candle->close;
+                }),
+                new CandleVariable($name.'_close_ema-10', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($candle) > 15) {
+                        array_shift($cache);
+                    }
+
+                    $EMA = trader_ema($cache, 10);
+                    if ($EMA === false) {
+                        return 0;
+                    }
+                    $arr = array_values($EMA);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_macd-10-21-9', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($candle) > 15) {
+                        array_shift($cache);
+                    }
+
+                    $MACD = trader_macd($cache, 10, 21, 9);
+                    if ($MACD === false) {
+                        return 0;
+                    }
+                    $arr = array_values($MACD[0]);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
                 })
             );
 
@@ -194,12 +232,32 @@ class Correlation
 
                     $absoluteValue = abs($R_XYZ[$xi][$yi]);
 
-                    if ($absoluteValue > 0.5) {
+                    if ($absoluteValue > 0.4) {
                         $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
                             [
                                 'fill' => [
                                     'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => '00ff00')
+                                    'color' => array('rgb' => '88ff88')
+                                ]
+                            ]
+                        );
+                    }
+                    if ($absoluteValue > 0.6) {
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'color' => array('rgb' => '1fee1f')
+                                ]
+                            ]
+                        );
+                    }
+                    if ($absoluteValue > 0.8) {
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'color' => array('rgb' => '1faa1f')
                                 ]
                             ]
                         );

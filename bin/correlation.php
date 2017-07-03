@@ -10,6 +10,8 @@ use CoinCorp\RateAnalyzer\Correlation\Correlation;
 use Commando\Command;
 use Monolog\Logger;
 
+ini_set("trader.real_precision", 10);
+
 $cmd = new Command();
 
 $cmd->setHelp('Calculate correlation and generate XLSX table');
