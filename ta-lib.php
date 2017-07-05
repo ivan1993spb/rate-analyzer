@@ -52,7 +52,22 @@ if (!function_exists("trader_ema")) {
      * @return array|boolean
      * @link http://php.net/manual/ru/function.trader-ema.php
      */
-    function trader_ema ($real, $timePeriod)
+    function trader_ema($real, $timePeriod)
+    {
+        return false;
+    }
+}
+
+if (!function_exists("trader_cci")) {
+    /**
+     * @param array   $high
+     * @param array   $low
+     * @param array   $close
+     * @param integer $timePeriod
+     * @return array|bool
+     * @link http://php.net/manual/ru/function.trader-cci.php
+     */
+    function trader_cci($high, $low, $close, $timePeriod)
     {
         return false;
     }
