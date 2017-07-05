@@ -10,6 +10,13 @@ use CoinCorp\RateAnalyzer\ExchangeStateSlice;
 use Commando\Command;
 use Monolog\Logger;
 
+define("CACHE_SIZE", 20);
+
+define("INDICATOR_EMA9", "EMA9");
+define("INDICATOR_MACD", "MACD");
+
+$indicators = [INDICATOR_EMA9, INDICATOR_MACD];
+
 $cmd = new Command();
 $cmd->setHelp('Generates JSON file with last candles');
 
@@ -23,6 +30,9 @@ $cmd->option('from')->describedAs('Time UTC')->default(new DateTime("0001-01-01"
 });
 $cmd->option('to')->describedAs('Time UTC')->default(new DateTime('now', new DateTimeZone('UTC')))->cast(function($value) {
     return new DateTime($value, new DateTimeZone('UTC'));
+});
+$cmd->option('indicator')->describedAs('Convert price to indicator')->must(function($value) use ($indicators) {
+    return in_array($value, $indicators);
 });
 
 /** @var \DateTime $from */
@@ -68,6 +78,8 @@ $startTime = null;
 /** @var \DateTime|null $finishTime */
 $finishTime = null;
 
+$cache = array_fill(0, sizeof($dataRow->candles), []);
+
 // Копируем тренд
 foreach ($generator as $dataRow) {
     if ($dataRow->time->getTimestamp() < $from->getTimestamp()) {
@@ -85,10 +97,38 @@ foreach ($generator as $dataRow) {
     }
 
     foreach ($dataRow->candles as $column => $candle) {
-        array_push($exchangeStateSlice->series[$column], [
-            'start' => $candle->start->getTimestamp(),
-            'price' => $candle->close,
-        ]);
+        switch ($cmd['indicator']) {
+            case INDICATOR_EMA9:
+                array_push($cache[$column], $candle->close);
+                while (sizeof($cache[$column]) > CACHE_SIZE) {
+                    array_shift($cache[$column]);
+                }
+
+                $value = 0;
+
+                $EMA = trader_ema($cache[$column], 9);
+                if (is_array($EMA)) {
+                    $arr = array_values($EMA);
+                    if (!empty($arr)) {
+                        $value = $arr[sizeof($arr)-1];
+
+                        array_push($exchangeStateSlice->series[$column], [
+                            'start' => $candle->start->getTimestamp(),
+                            'price' => $value,
+                        ]);
+                    }
+                }
+
+                break;
+            case INDICATOR_MACD:
+                break;
+            default:
+                array_push($exchangeStateSlice->series[$column], [
+                    'start' => $candle->start->getTimestamp(),
+                    'price' => $candle->close,
+                ]);
+                break;
+        }
     }
 
     $finishTime = clone $dataRow->time;
