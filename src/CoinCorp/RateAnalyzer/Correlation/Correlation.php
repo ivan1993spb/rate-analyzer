@@ -55,7 +55,7 @@ class Correlation
 
     public function findCorrelation()
     {
-        $variablePerCandle = $this->extended ? 5 : 3;
+        $variablePerCandle = $this->extended ? 7 : 5;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
         $variables = [];
@@ -71,7 +71,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($candle) > 15) {
+                    while (sizeof($cache) > 15) {
                         array_shift($cache);
                     }
 
@@ -86,11 +86,30 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
+                new CandleVariable($name.'_close_ema-5', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 15) {
+                        array_shift($cache);
+                    }
+
+                    $EMA = trader_ema($cache, 5);
+                    if ($EMA === false) {
+                        return 0;
+                    }
+                    $arr = array_values($EMA);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
                 new CandleVariable($name.'_close_macd-10-21-9', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($candle) > 15) {
+                    while (sizeof($cache) > 30) {
                         array_shift($cache);
                     }
 
@@ -99,6 +118,35 @@ class Correlation
                         return 0;
                     }
                     $arr = array_values($MACD[0]);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_cci-10', function(Candle $candle) {
+                    static $cacheHigh = [];
+                    static $cacheLow = [];
+                    static $cacheClose = [];
+
+                    array_push($cacheHigh, $candle->high);
+                    while (sizeof($cacheHigh) > 15) {
+                        array_shift($cacheHigh);
+                    }
+                    array_push($cacheLow, $candle->low);
+                    while (sizeof($cacheLow) > 15) {
+                        array_shift($cacheLow);
+                    }
+                    array_push($cacheClose, $candle->close);
+                    while (sizeof($cacheClose) > 15) {
+                        array_shift($cacheClose);
+                    }
+
+                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 10);
+                    if ($CCI === false) {
+                        return 0;
+                    }
+                    $arr = array_values($CCI);
                     if (empty($arr)) {
                         return 0;
                     }
