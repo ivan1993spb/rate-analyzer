@@ -72,3 +72,31 @@ if (!function_exists("trader_cci")) {
         return false;
     }
 }
+
+if (!function_exists("trader_adx")) {
+    /**
+     * @param array   $high
+     * @param array   $low
+     * @param array   $close
+     * @param integer $timePeriod
+     * @return array|bool
+     * @link http://php.net/manual/ru/function.trader-adx.php
+     */
+    function trader_adx($high, $low, $close, $timePeriod)
+    {
+        return false;
+    }
+}
+
+if (!function_exists("trader_mom")) {
+    /**
+     * @param array   $real
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/ru/function.trader-mom.php
+     */
+    function trader_mom($real, $timePeriod)
+    {
+        return false;
+    }
+}
