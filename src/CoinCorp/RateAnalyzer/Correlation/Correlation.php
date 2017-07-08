@@ -55,7 +55,7 @@ class Correlation
 
     public function findCorrelation()
     {
-        $variablePerCandle = $this->extended ? 20 : 18;
+        $variablePerCandle = $this->extended ? 23 : 21;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
         $variables = [];
@@ -444,6 +444,63 @@ class Correlation
                         return 0;
                     }
                     $arr = array_values($ATR);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_rsi-8', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 12) {
+                        array_shift($cache);
+                    }
+
+                    $RSI = trader_rsi($cache, 8);
+                    if ($RSI === false) {
+                        return 0;
+                    }
+                    $arr = array_values($RSI);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_rsi-15', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 20) {
+                        array_shift($cache);
+                    }
+
+                    $RSI = trader_rsi($cache, 15);
+                    if ($RSI === false) {
+                        return 0;
+                    }
+                    $arr = array_values($RSI);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_rsi-30', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 50) {
+                        array_shift($cache);
+                    }
+
+                    $RSI = trader_rsi($cache, 30);
+                    if ($RSI === false) {
+                        return 0;
+                    }
+                    $arr = array_values($RSI);
                     if (empty($arr)) {
                         return 0;
                     }

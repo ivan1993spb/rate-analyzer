@@ -141,3 +141,16 @@ if (!function_exists("trader_atr")) {
         return false;
     }
 }
+
+if (!function_exists("trader_rsi")) {
+    /**
+     * @param array   $real
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-rsi.php
+     */
+    function trader_rsi($real, $timePeriod)
+    {
+        return false;
+    }
+}
