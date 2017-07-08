@@ -55,7 +55,7 @@ class Correlation
 
     public function findCorrelation()
     {
-        $variablePerCandle = $this->extended ? 14 : 12;
+        $variablePerCandle = $this->extended ? 16 : 18;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
         $variables = [];
@@ -66,6 +66,44 @@ class Correlation
                 $variables,
                 new CandleVariable($name.'_close', function(Candle $candle) {
                     return $candle->close;
+                }),
+                new CandleVariable($name.'_close_sma-8', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 12) {
+                        array_shift($cache);
+                    }
+
+                    $SMA = trader_sma($cache, 8);
+                    if ($SMA === false) {
+                        return 0;
+                    }
+                    $arr = array_values($SMA);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_sma-15', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 20) {
+                        array_shift($cache);
+                    }
+
+                    $SMA = trader_sma($cache, 15);
+                    if ($SMA === false) {
+                        return 0;
+                    }
+                    $arr = array_values($SMA);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
                 }),
                 new CandleVariable($name.'_close_ema-8', function(Candle $candle) {
                     static $cache = [];
@@ -124,7 +162,6 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-
                 new CandleVariable($name.'_close_macd-10-21-9', function(Candle $candle) {
                     static $cache = [];
 
@@ -221,7 +258,6 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-
                 new CandleVariable($name.'_close_adx-12', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
@@ -317,8 +353,103 @@ class Correlation
                     }
 
                     return $arr[sizeof($arr)-1];
-                })
+                }),
+                new CandleVariable($name.'_close_cmo-12', function(Candle $candle) {
+                    static $cache = [];
 
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 15) {
+                        array_shift($cache);
+                    }
+
+                    $CMO = trader_cmo($cache, 12);
+                    if ($CMO === false) {
+                        return 0;
+                    }
+                    $arr = array_values($CMO);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_cmo-25', function(Candle $candle) {
+                    static $cache = [];
+
+                    array_push($cache, $candle->close);
+                    while (sizeof($cache) > 35) {
+                        array_shift($cache);
+                    }
+
+                    $CMO = trader_cmo($cache, 25);
+                    if ($CMO === false) {
+                        return 0;
+                    }
+                    $arr = array_values($CMO);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_atr-12', function(Candle $candle) {
+                    static $cacheHigh = [];
+                    static $cacheLow = [];
+                    static $cacheClose = [];
+
+                    array_push($cacheHigh, $candle->high);
+                    while (sizeof($cacheHigh) > 35) {
+                        array_shift($cacheHigh);
+                    }
+                    array_push($cacheLow, $candle->low);
+                    while (sizeof($cacheLow) > 35) {
+                        array_shift($cacheLow);
+                    }
+                    array_push($cacheClose, $candle->close);
+                    while (sizeof($cacheClose) > 35) {
+                        array_shift($cacheClose);
+                    }
+
+                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 12);
+                    if ($ATR === false) {
+                        return 0;
+                    }
+                    $arr = array_values($ATR);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                }),
+                new CandleVariable($name.'_close_atr-25', function(Candle $candle) {
+                    static $cacheHigh = [];
+                    static $cacheLow = [];
+                    static $cacheClose = [];
+
+                    array_push($cacheHigh, $candle->high);
+                    while (sizeof($cacheHigh) > 50) {
+                        array_shift($cacheHigh);
+                    }
+                    array_push($cacheLow, $candle->low);
+                    while (sizeof($cacheLow) > 50) {
+                        array_shift($cacheLow);
+                    }
+                    array_push($cacheClose, $candle->close);
+                    while (sizeof($cacheClose) > 50) {
+                        array_shift($cacheClose);
+                    }
+
+                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 25);
+                    if ($ATR === false) {
+                        return 0;
+                    }
+                    $arr = array_values($ATR);
+                    if (empty($arr)) {
+                        return 0;
+                    }
+
+                    return $arr[sizeof($arr)-1];
+                })
             );
 
             if ($this->extended) {
@@ -442,21 +573,46 @@ class Correlation
             foreach ($variables as $yi => $variableY) {
                 if ($xi !== $yi) {
                     $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
-                    $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $R_XYZ[$xi][$yi]);
+                    $value = round($R_XYZ[$xi][$yi], 3);
+                    $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $value);
 
-                    $absoluteValue = abs($R_XYZ[$xi][$yi]);
-
-                    if ($absoluteValue > 0.4) {
+                    if ($value < -0.8) {
                         $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
                             [
                                 'fill' => [
                                     'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => '88ff88')
+                                    'color' => array('rgb' => 'aa1f1f')
                                 ]
                             ]
                         );
-                    }
-                    if ($absoluteValue > 0.6) {
+                    } elseif ($value < -0.6) {
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'color' => array('rgb' => 'ee1f1f')
+                                ]
+                            ]
+                        );
+                    } elseif ($value < -0.4) {
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'color' => array('rgb' => 'ff8888')
+                                ]
+                            ]
+                        );
+                    } elseif ($value > 0.8) {
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                            [
+                                'fill' => [
+                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                    'color' => array('rgb' => '1faa1f')
+                                ]
+                            ]
+                        );
+                    } elseif ($value > 0.6) {
                         $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
                             [
                                 'fill' => [
@@ -465,13 +621,12 @@ class Correlation
                                 ]
                             ]
                         );
-                    }
-                    if ($absoluteValue > 0.8) {
+                    } elseif ($value > 0.4) {
                         $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
                             [
                                 'fill' => [
                                     'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => '1faa1f')
+                                    'color' => array('rgb' => '88ff88')
                                 ]
                             ]
                         );

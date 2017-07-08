@@ -25,12 +25,12 @@ if (!function_exists("trader_macd")) {
      * @param integer $fastPeriod
      * @param integer $slowPeriod
      * @param integer $signalPeriod
-     * @return array
+     * @return array|boolean
      * @link http://php.net/manual/en/function.trader-macd.php
      */
     function trader_macd($real, $fastPeriod, $slowPeriod, $signalPeriod)
     {
-        return [];
+        return false;
     }
 }
 
@@ -45,12 +45,25 @@ if (!function_exists("trader_errno")) {
     }
 }
 
+if (!function_exists("trader_sma")) {
+    /**
+     * @param array   $real
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-sma.php
+     */
+    function trader_sma($real, $timePeriod)
+    {
+        return false;
+    }
+}
+
 if (!function_exists("trader_ema")) {
     /**
      * @param array   $real
      * @param integer $timePeriod
      * @return array|boolean
-     * @link http://php.net/manual/ru/function.trader-ema.php
+     * @link http://php.net/manual/en/function.trader-ema.php
      */
     function trader_ema($real, $timePeriod)
     {
@@ -64,8 +77,8 @@ if (!function_exists("trader_cci")) {
      * @param array   $low
      * @param array   $close
      * @param integer $timePeriod
-     * @return array|bool
-     * @link http://php.net/manual/ru/function.trader-cci.php
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-cci.php
      */
     function trader_cci($high, $low, $close, $timePeriod)
     {
@@ -79,8 +92,8 @@ if (!function_exists("trader_adx")) {
      * @param array   $low
      * @param array   $close
      * @param integer $timePeriod
-     * @return array|bool
-     * @link http://php.net/manual/ru/function.trader-adx.php
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-adx.php
      */
     function trader_adx($high, $low, $close, $timePeriod)
     {
@@ -93,9 +106,37 @@ if (!function_exists("trader_mom")) {
      * @param array   $real
      * @param integer $timePeriod
      * @return array|boolean
-     * @link http://php.net/manual/ru/function.trader-mom.php
+     * @link http://php.net/manual/en/function.trader-mom.php
      */
     function trader_mom($real, $timePeriod)
+    {
+        return false;
+    }
+}
+
+if (!function_exists("trader_cmo")) {
+    /**
+     * @param array   $real
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-cmo.php
+     */
+    function trader_cmo($real, $timePeriod)
+    {
+        return false;
+    }
+}
+
+if (!function_exists("trader_atr")) {
+    /**
+     * @param array   $high
+     * @param array   $low
+     * @param array   $close
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-atr.php
+     */
+    function trader_atr($high, $low, $close, $timePeriod)
     {
         return false;
     }
