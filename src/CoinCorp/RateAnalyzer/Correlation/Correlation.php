@@ -18,6 +18,13 @@ use PHPExcel_Style_Fill;
 class Correlation
 {
     /**
+     * Невычисляемые поля в excel пометить следующим знаком
+     *
+     * @var string
+     */
+    const EXCEL_NAN_MARK = "NaN =(";
+
+    /**
      * @var \CoinCorp\RateAnalyzer\AggregatorInterface
      */
     private $aggregator;
@@ -589,12 +596,28 @@ class Correlation
                     $covXY = $covsXYZ[$xi][$yi];
                     $sX = $varS[$xi];
                     $sY = $varS[$yi];
-                    $R_XYZ[$xi][$yi] = $covXY / ($sX * $sY);
+                    if ($sX * $sY == 0) {
+                        // Данная ошибка может возникать из-за слишком маленьких значений цен и может быть преодолена
+                        // значительным увеличением размера свечи!
+                        if ($sX == 0) {
+                            $this->log->err("Division by zero! May be candle size should be increased.", [
+                                'variable_name' => $variableX->name
+                            ]);
+                        }
+                        if ($sY == 0) {
+                            $this->log->err("Division by zero! May be candle size should be increased.", [
+                                'variable_name' => $variableY->name
+                            ]);
+                        }
+                        $R_XYZ[$xi][$yi] = false;
+                    } else {
+                        $R_XYZ[$xi][$yi] = $covXY / ($sX * $sY);
+                    }
                 }
             }
         }
 
-        $this->log->info("R_XYZ", $R_XYZ);
+        $this->log->info("R_XYZ count:", ['corr' => $R_XYZ]);
 
         $this->log->info("Excel generation");
 
@@ -619,7 +642,7 @@ class Correlation
         $row += 1;
         $column = 0;
 
-        // Данные
+        // Вывод данных в excel
 
         foreach ($variables as $xi => $variableX) {
             $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
@@ -628,8 +651,10 @@ class Correlation
             $column += 1;
 
             foreach ($variables as $yi => $variableY) {
-                if ($xi !== $yi) {
-                    $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
+                $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
+
+                // Если одна и та же ячейка или если не было возможности посчитать корреляцию из-за деления на ноль, не выводим
+                if ($xi !== $yi && $R_XYZ[$xi][$yi] !== false) {
                     $value = round($R_XYZ[$xi][$yi], 3);
                     $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $value);
 
@@ -688,6 +713,17 @@ class Correlation
                             ]
                         );
                     }
+                } elseif ($R_XYZ[$xi][$yi] === false) {
+                    $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, self::EXCEL_NAN_MARK);
+                } else {
+                    $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
+                        [
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => '000000')
+                            ]
+                        ]
+                    );
                 }
 
                 $column += 1;
