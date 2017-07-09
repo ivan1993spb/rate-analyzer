@@ -621,7 +621,7 @@ class Correlation
                         }
                         $R_XYZ[$xi][$yi] = false;
                     } else {
-                        $R_XYZ[$xi][$yi] = $covXY / ($sX * $sY);
+                        $R_XYZ[$xi][$yi] = round($covXY / ($sX * $sY), 3);
                     }
                 }
             }
