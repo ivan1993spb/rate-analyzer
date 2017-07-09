@@ -734,6 +734,8 @@ class Correlation
         }
 
         $ExcelPriceList->getActiveSheet()->freezePane("B2");
+        $ExcelPriceList->getActiveSheet()->getStyle("1:1")->getFont()->setBold(true);
+        $ExcelPriceList->getActiveSheet()->getStyle("A:A")->getFont()->setBold(true);
 
         $objWriter = PHPExcel_IOFactory::createWriter($ExcelPriceList, 'Excel2007');
         $objWriter->save($this->XLSXFile);
