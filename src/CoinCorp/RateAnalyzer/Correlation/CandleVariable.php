@@ -22,9 +22,9 @@ class CandleVariable
     public $value = 0.0;
 
     /**
-     * @var callable
+     * @var callable|null
      */
-    private $update;
+    private $update = null;
 
     /**
      * CandleVariable constructor.
@@ -38,7 +38,15 @@ class CandleVariable
         $this->update = $update;
     }
 
-    public function update(Candle $candle) {
-        $this->value = call_user_func($this->update, $candle);
+    public function update(Candle $candle)
+    {
+        if (is_callable($this->update)) {
+            $this->value = call_user_func($this->update, $candle);
+        }
+    }
+
+    public function free()
+    {
+        $this->update = null;
     }
 }

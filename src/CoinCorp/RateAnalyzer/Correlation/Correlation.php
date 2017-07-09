@@ -25,6 +25,11 @@ class Correlation
     const EXCEL_NAN_MARK = "NaN =(";
 
     /**
+     * @var integer
+     */
+    const TA_COMMON_CACHE_SIZE = 1500;
+
+    /**
      * @var \CoinCorp\RateAnalyzer\AggregatorInterface
      */
     private $aggregator;
@@ -78,7 +83,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 12) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -97,7 +102,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 20) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -116,7 +121,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 12) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -135,7 +140,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 20) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -154,7 +159,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 50) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -173,7 +178,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 30) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -192,7 +197,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 65) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -213,15 +218,15 @@ class Correlation
                     static $cacheClose = [];
 
                     array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > 15) {
+                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheHigh);
                     }
                     array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > 15) {
+                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheLow);
                     }
                     array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > 15) {
+                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheClose);
                     }
 
@@ -242,15 +247,15 @@ class Correlation
                     static $cacheClose = [];
 
                     array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > 35) {
+                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheHigh);
                     }
                     array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > 35) {
+                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheLow);
                     }
                     array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > 35) {
+                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheClose);
                     }
 
@@ -271,15 +276,15 @@ class Correlation
                     static $cacheClose = [];
 
                     array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > 35) {
+                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheHigh);
                     }
                     array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > 35) {
+                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheLow);
                     }
                     array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > 35) {
+                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheClose);
                     }
 
@@ -300,15 +305,15 @@ class Correlation
                     static $cacheClose = [];
 
                     array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > 50) {
+                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheHigh);
                     }
                     array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > 50) {
+                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheLow);
                     }
                     array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > 50) {
+                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheClose);
                     }
 
@@ -327,7 +332,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 15) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -346,7 +351,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 35) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -365,7 +370,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 15) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -384,7 +389,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 35) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -405,15 +410,15 @@ class Correlation
                     static $cacheClose = [];
 
                     array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > 35) {
+                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheHigh);
                     }
                     array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > 35) {
+                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheLow);
                     }
                     array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > 35) {
+                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheClose);
                     }
 
@@ -434,15 +439,15 @@ class Correlation
                     static $cacheClose = [];
 
                     array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > 50) {
+                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheHigh);
                     }
                     array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > 50) {
+                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheLow);
                     }
                     array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > 50) {
+                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cacheClose);
                     }
 
@@ -461,7 +466,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 12) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -480,7 +485,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 20) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -499,7 +504,7 @@ class Correlation
                     static $cache = [];
 
                     array_push($cache, $candle->close);
-                    while (sizeof($cache) > 50) {
+                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
                         array_shift($cache);
                     }
 
@@ -581,6 +586,11 @@ class Correlation
             foreach ($variables as $i => $variable) {
                 $varS[$i] += pow($variable->value - $means[$i], 2);
             }
+        }
+
+        // Значения переменных больше не пригодяться, значит можно освободить память почистя кеши
+        foreach ($variables as $variable) {
+            $variable->free();
         }
 
         $varS = array_map('sqrt', $varS);
