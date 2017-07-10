@@ -1,4 +1,4 @@
-IMAGE_NAME = "rate-analyzer"
+IMAGE_NAME = "registry.gitlab.com/coincorp/rate-analyzer"
 
 install:
 
@@ -15,3 +15,7 @@ rmi:
 test:
 
 	@docker run --rm -v $(PWD):/app -w /app phpunit/phpunit --verbose
+
+push:
+
+	@docker push $(IMAGE_NAME)
