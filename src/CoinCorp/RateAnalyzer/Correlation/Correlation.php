@@ -79,7 +79,7 @@ class Correlation
                 new CandleVariable($name.'_close', function(Candle $candle) {
                     return $candle->close;
                 }),
-                new CandleVariable($name.'_close_sma-8', function(Candle $candle) {
+                new CandleVariable($name.'_close_sma-10', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -87,7 +87,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $SMA = trader_sma($cache, 8);
+                    $SMA = trader_sma($cache, 10);
                     if ($SMA === false) {
                         return 0;
                     }
@@ -98,7 +98,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_sma-15', function(Candle $candle) {
+                new CandleVariable($name.'_close_sma-35', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -106,7 +106,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $SMA = trader_sma($cache, 15);
+                    $SMA = trader_sma($cache, 35);
                     if ($SMA === false) {
                         return 0;
                     }
@@ -117,7 +117,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_ema-8', function(Candle $candle) {
+                new CandleVariable($name.'_close_ema-9', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -125,26 +125,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $EMA = trader_ema($cache, 8);
-                    if ($EMA === false) {
-                        return 0;
-                    }
-                    $arr = array_values($EMA);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_ema-15', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $EMA = trader_ema($cache, 15);
+                    $EMA = trader_ema($cache, 9);
                     if ($EMA === false) {
                         return 0;
                     }
@@ -174,7 +155,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_macd-10-21-9', function(Candle $candle) {
+                new CandleVariable($name.'_close_macd-5-35-5', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -182,7 +163,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $MACD = trader_macd($cache, 10, 21, 9);
+                    $MACD = trader_macd($cache, 5, 35, 5);
                     if ($MACD === false) {
                         return 0;
                     }
@@ -193,7 +174,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_macd-15-31-19', function(Candle $candle) {
+                new CandleVariable($name.'_close_macd-12-26-9', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -201,7 +182,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $MACD = trader_macd($cache, 15, 31, 19);
+                    $MACD = trader_macd($cache, 12, 26, 9);
                     if ($MACD === false) {
                         return 0;
                     }
@@ -212,7 +193,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_cci-12', function(Candle $candle) {
+                new CandleVariable($name.'_close_cci-10', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
                     static $cacheClose = [];
@@ -230,7 +211,7 @@ class Correlation
                         array_shift($cacheClose);
                     }
 
-                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 12);
+                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 10);
                     if ($CCI === false) {
                         return 0;
                     }
@@ -241,7 +222,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_cci-25', function(Candle $candle) {
+                new CandleVariable($name.'_close_cci-30', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
                     static $cacheClose = [];
@@ -259,7 +240,7 @@ class Correlation
                         array_shift($cacheClose);
                     }
 
-                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 25);
+                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 30);
                     if ($CCI === false) {
                         return 0;
                     }
@@ -270,7 +251,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_adx-12', function(Candle $candle) {
+                new CandleVariable($name.'_close_adx-10', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
                     static $cacheClose = [];
@@ -288,7 +269,7 @@ class Correlation
                         array_shift($cacheClose);
                     }
 
-                    $ADX = trader_adx($cacheHigh, $cacheLow, $cacheClose, 12);
+                    $ADX = trader_adx($cacheHigh, $cacheLow, $cacheClose, 10);
                     if ($ADX === false) {
                         return 0;
                     }
@@ -299,7 +280,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_adx-25', function(Candle $candle) {
+                new CandleVariable($name.'_close_adx-30', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
                     static $cacheClose = [];
@@ -317,7 +298,7 @@ class Correlation
                         array_shift($cacheClose);
                     }
 
-                    $ADX = trader_adx($cacheHigh, $cacheLow, $cacheClose, 25);
+                    $ADX = trader_adx($cacheHigh, $cacheLow, $cacheClose, 30);
                     if ($ADX === false) {
                         return 0;
                     }
@@ -328,7 +309,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_mom-12', function(Candle $candle) {
+                new CandleVariable($name.'_close_mom-10', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -336,7 +317,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $MOM = trader_mom($cache, 12);
+                    $MOM = trader_mom($cache, 10);
                     if ($MOM === false) {
                         return 0;
                     }
@@ -347,7 +328,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_mom-25', function(Candle $candle) {
+                new CandleVariable($name.'_close_mom-30', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -355,7 +336,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $MOM = trader_mom($cache, 25);
+                    $MOM = trader_mom($cache, 30);
                     if ($MOM === false) {
                         return 0;
                     }
@@ -366,7 +347,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_cmo-12', function(Candle $candle) {
+                new CandleVariable($name.'_close_cmo-10', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -374,7 +355,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $CMO = trader_cmo($cache, 12);
+                    $CMO = trader_cmo($cache, 10);
                     if ($CMO === false) {
                         return 0;
                     }
@@ -385,7 +366,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_cmo-25', function(Candle $candle) {
+                new CandleVariable($name.'_close_cmo-30', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -393,7 +374,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $CMO = trader_cmo($cache, 25);
+                    $CMO = trader_cmo($cache, 30);
                     if ($CMO === false) {
                         return 0;
                     }
@@ -404,7 +385,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_atr-12', function(Candle $candle) {
+                new CandleVariable($name.'_close_atr-10', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
                     static $cacheClose = [];
@@ -422,7 +403,7 @@ class Correlation
                         array_shift($cacheClose);
                     }
 
-                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 12);
+                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 10);
                     if ($ATR === false) {
                         return 0;
                     }
@@ -433,7 +414,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_atr-25', function(Candle $candle) {
+                new CandleVariable($name.'_close_atr-30', function(Candle $candle) {
                     static $cacheHigh = [];
                     static $cacheLow = [];
                     static $cacheClose = [];
@@ -451,7 +432,7 @@ class Correlation
                         array_shift($cacheClose);
                     }
 
-                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 25);
+                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 30);
                     if ($ATR === false) {
                         return 0;
                     }
@@ -462,7 +443,7 @@ class Correlation
 
                     return $arr[sizeof($arr)-1];
                 }),
-                new CandleVariable($name.'_close_rsi-8', function(Candle $candle) {
+                new CandleVariable($name.'_close_rsi-10', function(Candle $candle) {
                     static $cache = [];
 
                     array_push($cache, $candle->close);
@@ -470,26 +451,7 @@ class Correlation
                         array_shift($cache);
                     }
 
-                    $RSI = trader_rsi($cache, 8);
-                    if ($RSI === false) {
-                        return 0;
-                    }
-                    $arr = array_values($RSI);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_rsi-15', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $RSI = trader_rsi($cache, 15);
+                    $RSI = trader_rsi($cache, 10);
                     if ($RSI === false) {
                         return 0;
                     }
