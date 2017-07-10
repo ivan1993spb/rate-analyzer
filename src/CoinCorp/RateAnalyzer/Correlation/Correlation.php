@@ -619,6 +619,8 @@ class Correlation
                                 'variable_name' => $variableY->name
                             ]);
                         }
+
+                        // TODO: Create valid value. NaN?
                         $R_XYZ[$xi][$yi] = false;
                     } else {
                         $R_XYZ[$xi][$yi] = round($covXY / ($sX * $sY), 3);
@@ -627,7 +629,17 @@ class Correlation
             }
         }
 
-        $this->log->info("R_XYZ count:", ['corr' => $R_XYZ]);
+        $this->log->info("Write corr table to stdout");
+
+        $names = [];
+        foreach ($variables as $variable) {
+            array_push($names, $variable->name);
+        }
+
+        echo json_encode([
+            'names' => $names,
+            'corr'  => $R_XYZ,
+        ]);
 
         $this->log->info("Excel generation");
 
