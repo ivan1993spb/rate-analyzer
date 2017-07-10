@@ -15,10 +15,10 @@ ini_set('memory_limit', '-1');
 
 $cmd = new Command();
 
-$cmd->setHelp('Calculate correlation and generate XLSX table');
+$cmd->setHelp('Calculates correlation and generates XLSX and JSON tables. Script writes XLSX to file and JSON to STDOUT');
 
 $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
-$cmd->option('o')->aka('output-xlsx')->describedAs('Output XLSX file name')->required();
+$cmd->option('o')->aka('output-xlsx')->describedAs('Output XLSX file name')->default(false);
 $cmd->option('e')->aka('extended')->describedAs('Generate extended correlation table')->boolean()->default(false);
 $cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
     return is_numeric($value) && $value > 0;

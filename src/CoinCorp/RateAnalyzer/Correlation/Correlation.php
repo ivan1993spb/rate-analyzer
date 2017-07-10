@@ -40,7 +40,7 @@ class Correlation
     private $log;
 
     /**
-     * @var string
+     * @var string|boolean
      */
     private $XLSXFile;
 
@@ -54,10 +54,10 @@ class Correlation
      *
      * @param \CoinCorp\RateAnalyzer\AggregatorInterface $aggregator
      * @param \Monolog\Logger                            $log
-     * @param string                                     $XLSXFile
+     * @param string|false                               $XLSXFile
      * @param bool                                       $extended
      */
-    public function __construct(AggregatorInterface $aggregator, Logger $log, $XLSXFile, $extended = false)
+    public function __construct(AggregatorInterface $aggregator, Logger $log, $XLSXFile = false, $extended = false)
     {
         $this->aggregator = $aggregator;
         $this->log = $log;
@@ -639,6 +639,12 @@ class Correlation
             'names' => $names,
             'corr'  => $R_XYZ,
         ]);
+
+        if (empty($this->XLSXFile)) {
+            return;
+        }
+
+        // TODO: Refactor current function and replace XLSX generation.
 
         $this->log->info("Excel generation");
 
