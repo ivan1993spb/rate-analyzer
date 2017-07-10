@@ -620,8 +620,7 @@ class Correlation
                             ]);
                         }
 
-                        // TODO: Create valid value. NaN?
-                        $R_XYZ[$xi][$yi] = false;
+                        $R_XYZ[$xi][$yi] = null;
                     } else {
                         $R_XYZ[$xi][$yi] = round($covXY / ($sX * $sY), 3);
                     }
@@ -676,7 +675,7 @@ class Correlation
                 $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
 
                 // Если одна и та же ячейка или если не было возможности посчитать корреляцию из-за деления на ноль, не выводим
-                if ($xi !== $yi && $R_XYZ[$xi][$yi] !== false) {
+                if ($xi !== $yi && $R_XYZ[$xi][$yi] !== null) {
                     $value = round($R_XYZ[$xi][$yi], 3);
                     $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $value);
 
@@ -735,7 +734,7 @@ class Correlation
                             ]
                         );
                     }
-                } elseif ($R_XYZ[$xi][$yi] === false) {
+                } elseif ($R_XYZ[$xi][$yi] === null) {
                     $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, self::EXCEL_NAN_MARK);
                 } else {
                     $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
