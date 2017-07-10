@@ -680,71 +680,57 @@ class Correlation
                     $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $value);
 
                     if ($value < -0.8) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => 'aa1f1f')
-                                ]
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => 'aa1f1f')
                             ]
-                        );
+                        ]);
                     } elseif ($value < -0.6) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => 'ee1f1f')
-                                ]
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => 'ee1f1f')
                             ]
-                        );
+                        ]);
                     } elseif ($value < -0.4) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => 'ff8888')
-                                ]
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => 'ff8888')
                             ]
-                        );
+                        ]);
                     } elseif ($value > 0.8) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => '1faa1f')
-                                ]
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => '1faa1f')
                             ]
-                        );
+                        ]);
                     } elseif ($value > 0.6) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => '1fee1f')
-                                ]
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => '1fee1f')
                             ]
-                        );
+                        ]);
                     } elseif ($value > 0.4) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                            [
-                                'fill' => [
-                                    'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                    'color' => array('rgb' => '88ff88')
-                                ]
+                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                            'fill' => [
+                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                                'color' => array('rgb' => '88ff88')
                             ]
-                        );
+                        ]);
                     }
                 } elseif ($R_XYZ[$xi][$yi] === null) {
                     $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, self::EXCEL_NAN_MARK);
                 } else {
-                    $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray(
-                        [
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => '000000')
-                            ]
+                    $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
+                        'fill' => [
+                            'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                            'color' => array('rgb' => '000000')
                         ]
-                    );
+                    ]);
                 }
 
                 $column += 1;
