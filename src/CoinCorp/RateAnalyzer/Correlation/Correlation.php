@@ -67,7 +67,7 @@ class Correlation
 
     public function findCorrelation()
     {
-        $variablePerCandle = $this->extended ? 23 : 21;
+        $variablePerCandle = $this->extended ? 21 : 19;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
         $variables = [];
