@@ -11,6 +11,7 @@ use Commando\Command;
 use Monolog\Logger;
 
 ini_set("trader.real_precision", 10);
+ini_set('memory_limit', '-1');
 
 $cmd = new Command();
 
