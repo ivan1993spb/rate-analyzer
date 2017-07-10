@@ -1,13 +1,7 @@
 FROM php:7.1-cli
 
-RUN pecl install trader && docker-php-ext-enable trader
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq zlib1g-dev
+
+RUN pecl install trader && docker-php-ext-enable trader; docker-php-ext-install -j$(nproc) zip
 
 ADD . /app
-
-WORKDIR /app
-
-VOLUME /app/data
-
-VOLUME /app/output
-
-ENTRYPOINT php /app/rate-analizer.php
