@@ -18,5 +18,8 @@
         <testsuite name="Test Scanners">
             <file>tests/CandleEmitterScannerTest.php</file>
         </testsuite>
+        <testsuite name="Test candle variables">
+            <directory suffix="Test.php">tests/CandleVariables</directory>
+        </testsuite>
     </testsuites>
 </phpunit>
