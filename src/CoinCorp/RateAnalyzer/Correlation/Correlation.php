@@ -5,10 +5,6 @@ namespace CoinCorp\RateAnalyzer\Correlation;
 use CoinCorp\RateAnalyzer\AggregatorInterface;
 use CoinCorp\RateAnalyzer\Candle;
 use Monolog\Logger;
-use PHPExcel;
-use PHPExcel_Cell;
-use PHPExcel_IOFactory;
-use PHPExcel_Style_Fill;
 
 /**
  * Class Correlation
@@ -40,11 +36,6 @@ class Correlation
     private $log;
 
     /**
-     * @var string|boolean
-     */
-    private $XLSXFile;
-
-    /**
      * @var boolean
      */
     private $extended;
@@ -54,14 +45,12 @@ class Correlation
      *
      * @param \CoinCorp\RateAnalyzer\AggregatorInterface $aggregator
      * @param \Monolog\Logger                            $log
-     * @param string|false                               $XLSXFile
      * @param bool                                       $extended
      */
-    public function __construct(AggregatorInterface $aggregator, Logger $log, $XLSXFile = false, $extended = false)
+    public function __construct(AggregatorInterface $aggregator, Logger $log, $extended = false)
     {
         $this->aggregator = $aggregator;
         $this->log = $log;
-        $this->XLSXFile = $XLSXFile;
         $this->extended = $extended;
     }
 
@@ -601,118 +590,5 @@ class Correlation
             'names' => $names,
             'corr'  => $R_XYZ,
         ]);
-
-        if (empty($this->XLSXFile)) {
-            return;
-        }
-
-        // TODO: Refactor current function and replace XLSX generation.
-
-        $this->log->info("Excel generation");
-
-        $ExcelPriceList = new PHPExcel();
-
-        $ExcelPriceList->setActiveSheetIndex(0);
-
-
-        foreach(range(0, sizeof($variables)) as $columnID) {
-            $columnIndex = PHPExcel_Cell::stringFromColumnIndex($columnID);
-            $ExcelPriceList->getActiveSheet()->getColumnDimension($columnIndex)->setAutoSize(true);
-        }
-
-        $column = 1;
-        $row = 1;
-        foreach ($variables as $xi => $variableX) {
-            $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
-            $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $variableX->name);
-            $column += 1;
-        }
-
-        $row += 1;
-        $column = 0;
-
-        // Вывод данных в excel
-
-        foreach ($variables as $xi => $variableX) {
-            $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
-            $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $variableX->name);
-
-            $column += 1;
-
-            foreach ($variables as $yi => $variableY) {
-                $columnIndex = PHPExcel_Cell::stringFromColumnIndex($column);
-
-                // Если одна и та же ячейка или если не было возможности посчитать корреляцию из-за деления на ноль, не выводим
-                if ($xi !== $yi && $R_XYZ[$xi][$yi] !== null) {
-                    $value = round($R_XYZ[$xi][$yi], 3);
-                    $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, $value);
-
-                    if ($value < -0.8) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => 'aa1f1f')
-                            ]
-                        ]);
-                    } elseif ($value < -0.6) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => 'ee1f1f')
-                            ]
-                        ]);
-                    } elseif ($value < -0.4) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => 'ff8888')
-                            ]
-                        ]);
-                    } elseif ($value > 0.8) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => '1faa1f')
-                            ]
-                        ]);
-                    } elseif ($value > 0.6) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => '1fee1f')
-                            ]
-                        ]);
-                    } elseif ($value > 0.4) {
-                        $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                            'fill' => [
-                                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                                'color' => array('rgb' => '88ff88')
-                            ]
-                        ]);
-                    }
-                } elseif ($R_XYZ[$xi][$yi] === null) {
-                    $ExcelPriceList->getActiveSheet()->setCellValue($columnIndex.$row, self::EXCEL_NAN_MARK);
-                } else {
-                    $ExcelPriceList->getActiveSheet()->getStyle($columnIndex.$row)->applyFromArray([
-                        'fill' => [
-                            'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                            'color' => array('rgb' => '000000')
-                        ]
-                    ]);
-                }
-
-                $column += 1;
-            }
-
-            $column = 0;
-            $row += 1;
-        }
-
-        $ExcelPriceList->getActiveSheet()->freezePane("B2");
-        $ExcelPriceList->getActiveSheet()->getStyle("1:1")->getFont()->setBold(true);
-        $ExcelPriceList->getActiveSheet()->getStyle("A:A")->getFont()->setBold(true);
-
-        $objWriter = PHPExcel_IOFactory::createWriter($ExcelPriceList, 'Excel2007');
-        $objWriter->save($this->XLSXFile);
     }
 }
