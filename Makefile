@@ -14,7 +14,7 @@ rmi:
 
 test:
 
-	@docker run --rm -v $(PWD):/app -w /app phpunit/phpunit --verbose
+	@docker run --rm -v $(PWD):/app -w /app $(IMAGE_NAME) /app/vendor/bin/phpunit --verbose
 
 push:
 
