@@ -18,7 +18,3 @@ alias cc-last-candles="docker run --rm -v \$(pwd):/workdir -w /workdir registry.
 alias cc-latest-prices="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/print-latest-prices.php"
 alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/scan-candle-emitter.php"
 ```
-
-## TODO
-
-- Добавить недостающие алиасы
