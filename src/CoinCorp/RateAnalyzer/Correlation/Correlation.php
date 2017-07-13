@@ -3,7 +3,18 @@
 namespace CoinCorp\RateAnalyzer\Correlation;
 
 use CoinCorp\RateAnalyzer\AggregatorInterface;
-use CoinCorp\RateAnalyzer\Candle;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableADX;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableATR;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableCCI;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableClosePrice;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableCMO;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableEMA;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableMACD;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableMOM;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableRSI;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableSMA;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableTrades;
+use CoinCorp\RateAnalyzer\Correlation\CandleVariables\CandleVariableVolume;
 use Monolog\Logger;
 
 /**
@@ -58,433 +69,38 @@ class Correlation
     {
         $variablePerCandle = $this->extended ? 21 : 19;
 
-        /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariable[] $variables */
+        /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariableInterface[] $variables */
         $variables = [];
 
         // Для каждой свечи добавляем три типа переменных
         foreach ($this->aggregator->emittersNames() as $name) {
-            array_push(
-                $variables,
-                new CandleVariable($name.'_close', function(Candle $candle) {
-                    return $candle->close;
-                }),
-                new CandleVariable($name.'_close_sma-10', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $SMA = trader_sma($cache, 10);
-                    if ($SMA === false) {
-                        return 0;
-                    }
-                    $arr = array_values($SMA);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_sma-35', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $SMA = trader_sma($cache, 35);
-                    if ($SMA === false) {
-                        return 0;
-                    }
-                    $arr = array_values($SMA);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_ema-9', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $EMA = trader_ema($cache, 9);
-                    if ($EMA === false) {
-                        return 0;
-                    }
-                    $arr = array_values($EMA);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_ema-30', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $EMA = trader_ema($cache, 30);
-                    if ($EMA === false) {
-                        return 0;
-                    }
-                    $arr = array_values($EMA);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_macd-5-35-5', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $MACD = trader_macd($cache, 5, 35, 5);
-                    if ($MACD === false) {
-                        return 0;
-                    }
-                    $arr = array_values($MACD[0]);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_macd-12-26-9', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $MACD = trader_macd($cache, 12, 26, 9);
-                    if ($MACD === false) {
-                        return 0;
-                    }
-                    $arr = array_values($MACD[0]);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_cci-10', function(Candle $candle) {
-                    static $cacheHigh = [];
-                    static $cacheLow = [];
-                    static $cacheClose = [];
-
-                    array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheHigh);
-                    }
-                    array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheLow);
-                    }
-                    array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheClose);
-                    }
-
-                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 10);
-                    if ($CCI === false) {
-                        return 0;
-                    }
-                    $arr = array_values($CCI);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_cci-30', function(Candle $candle) {
-                    static $cacheHigh = [];
-                    static $cacheLow = [];
-                    static $cacheClose = [];
-
-                    array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheHigh);
-                    }
-                    array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheLow);
-                    }
-                    array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheClose);
-                    }
-
-                    $CCI = trader_cci($cacheHigh, $cacheLow, $cacheClose, 30);
-                    if ($CCI === false) {
-                        return 0;
-                    }
-                    $arr = array_values($CCI);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_adx-10', function(Candle $candle) {
-                    static $cacheHigh = [];
-                    static $cacheLow = [];
-                    static $cacheClose = [];
-
-                    array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheHigh);
-                    }
-                    array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheLow);
-                    }
-                    array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheClose);
-                    }
-
-                    $ADX = trader_adx($cacheHigh, $cacheLow, $cacheClose, 10);
-                    if ($ADX === false) {
-                        return 0;
-                    }
-                    $arr = array_values($ADX);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_adx-30', function(Candle $candle) {
-                    static $cacheHigh = [];
-                    static $cacheLow = [];
-                    static $cacheClose = [];
-
-                    array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheHigh);
-                    }
-                    array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheLow);
-                    }
-                    array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheClose);
-                    }
-
-                    $ADX = trader_adx($cacheHigh, $cacheLow, $cacheClose, 30);
-                    if ($ADX === false) {
-                        return 0;
-                    }
-                    $arr = array_values($ADX);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_mom-10', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $MOM = trader_mom($cache, 10);
-                    if ($MOM === false) {
-                        return 0;
-                    }
-                    $arr = array_values($MOM);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_mom-30', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $MOM = trader_mom($cache, 30);
-                    if ($MOM === false) {
-                        return 0;
-                    }
-                    $arr = array_values($MOM);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_cmo-10', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $CMO = trader_cmo($cache, 10);
-                    if ($CMO === false) {
-                        return 0;
-                    }
-                    $arr = array_values($CMO);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_cmo-30', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $CMO = trader_cmo($cache, 30);
-                    if ($CMO === false) {
-                        return 0;
-                    }
-                    $arr = array_values($CMO);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_atr-10', function(Candle $candle) {
-                    static $cacheHigh = [];
-                    static $cacheLow = [];
-                    static $cacheClose = [];
-
-                    array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheHigh);
-                    }
-                    array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheLow);
-                    }
-                    array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheClose);
-                    }
-
-                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 10);
-                    if ($ATR === false) {
-                        return 0;
-                    }
-                    $arr = array_values($ATR);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_atr-30', function(Candle $candle) {
-                    static $cacheHigh = [];
-                    static $cacheLow = [];
-                    static $cacheClose = [];
-
-                    array_push($cacheHigh, $candle->high);
-                    while (sizeof($cacheHigh) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheHigh);
-                    }
-                    array_push($cacheLow, $candle->low);
-                    while (sizeof($cacheLow) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheLow);
-                    }
-                    array_push($cacheClose, $candle->close);
-                    while (sizeof($cacheClose) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cacheClose);
-                    }
-
-                    $ATR = trader_atr($cacheHigh, $cacheLow, $cacheClose, 30);
-                    if ($ATR === false) {
-                        return 0;
-                    }
-                    $arr = array_values($ATR);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_rsi-10', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $RSI = trader_rsi($cache, 10);
-                    if ($RSI === false) {
-                        return 0;
-                    }
-                    $arr = array_values($RSI);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                }),
-                new CandleVariable($name.'_close_rsi-30', function(Candle $candle) {
-                    static $cache = [];
-
-                    array_push($cache, $candle->close);
-                    while (sizeof($cache) > self::TA_COMMON_CACHE_SIZE) {
-                        array_shift($cache);
-                    }
-
-                    $RSI = trader_rsi($cache, 30);
-                    if ($RSI === false) {
-                        return 0;
-                    }
-                    $arr = array_values($RSI);
-                    if (empty($arr)) {
-                        return 0;
-                    }
-
-                    return $arr[sizeof($arr)-1];
-                })
-            );
+            array_push($variables, new CandleVariableClosePrice($name.'_close'));
+            array_push($variables, new CandleVariableSMA($name.'_close_sma-10', 10));
+            array_push($variables, new CandleVariableSMA($name.'_close_sma-35', 35));
+            array_push($variables, new CandleVariableEMA($name.'_close_ema-9', 9, self::TA_COMMON_CACHE_SIZE));
+            array_push($variables, new CandleVariableEMA($name.'_close_ema-30', 9, self::TA_COMMON_CACHE_SIZE));
+            array_push($variables, new CandleVariableMACD($name.'_close_macd-5-35-5', 5, 35, 5, self::TA_COMMON_CACHE_SIZE));
+            array_push($variables, new CandleVariableMACD($name.'_close_macd-12-26-9', 12, 26, 9, self::TA_COMMON_CACHE_SIZE));
+            array_push($variables, new CandleVariableCCI($name.'_close_cci-10', 10));
+            array_push($variables, new CandleVariableCCI($name.'_close_cci-30', 30));
+            array_push($variables, new CandleVariableADX($name.'_close_adx-10', 10));
+            array_push($variables, new CandleVariableADX($name.'_close_adx-30', 30));
+            array_push($variables, new CandleVariableMOM($name.'_close_mom-10', 10));
+            array_push($variables, new CandleVariableMOM($name.'_close_mom-30', 30));
+            array_push($variables, new CandleVariableCMO($name.'_close_cmo-10', 10));
+            array_push($variables, new CandleVariableCMO($name.'_close_cmo-30', 30));
+            array_push($variables, new CandleVariableATR($name.'_close_atr-10', 10));
+            array_push($variables, new CandleVariableATR($name.'_close_atr-30', 30));
+            array_push($variables, new CandleVariableRSI($name.'_close_rsi-10', 10));
+            array_push($variables, new CandleVariableRSI($name.'_close_rsi-30', 30));
 
             if ($this->extended) {
-                array_push(
-                    $variables,
-                    new CandleVariable($name.'_volume', function(Candle $candle) {
-                        return $candle->volume;
-                    }),
-                    new CandleVariable($name.'_trades', function(Candle $candle) {
-                        return $candle->trades;
-                    })
-                );
+                array_push($variables, new CandleVariableVolume($name.'_volume'));
+                array_push($variables, new CandleVariableTrades($name.'_trades'));
             }
         }
 
+        // TODO: Refactor this.
         // Return if nothing to analyze
         if ($this->aggregator->capacity() === 0) {
             return;
@@ -505,7 +121,8 @@ class Correlation
                     $variable_index = $variablePerCandle*$column + $i;
                     $variable = $variables[$variable_index];
                     $variable->update($candle);
-                    $means[$variable_index] = $means[$variable_index] * $k  + $variable->value / $count;
+                    // TODO: Начинаем считать только тогда, когда переменная готова!
+                    $means[$variable_index] = $means[$variable_index] * $k  + $variable->value() / $count;
                 }
             }
         }
@@ -529,13 +146,13 @@ class Correlation
             foreach ($variables as $xi => $variableX) {
                 foreach ($variables as $yi => $variableY) {
                     if ($xi !== $yi) {
-                        $covsXYZ[$xi][$yi] += ($variableX->value - $means[$xi]) * ($variableY->value - $means[$yi]);
+                        $covsXYZ[$xi][$yi] += ($variableX->value() - $means[$xi]) * ($variableY->value() - $means[$yi]);
                     }
                 }
             }
 
             foreach ($variables as $i => $variable) {
-                $varS[$i] += pow($variable->value - $means[$i], 2);
+                $varS[$i] += pow($variable->value() - $means[$i], 2);
             }
         }
 
@@ -562,12 +179,12 @@ class Correlation
                         // значительным увеличением размера свечи!
                         if ($sX == 0) {
                             $this->log->err("Division by zero! May be candle size should be increased.", [
-                                'variable_name' => $variableX->name
+                                'variable_name' => $variableX->name()
                             ]);
                         }
                         if ($sY == 0) {
                             $this->log->err("Division by zero! May be candle size should be increased.", [
-                                'variable_name' => $variableY->name
+                                'variable_name' => $variableY->name()
                             ]);
                         }
 
@@ -583,9 +200,10 @@ class Correlation
 
         $names = [];
         foreach ($variables as $variable) {
-            array_push($names, $variable->name);
+            array_push($names, $variable->name());
         }
 
+        // TODO: Возвращать значения.
         echo json_encode([
             'names' => $names,
             'corr'  => $R_XYZ,
