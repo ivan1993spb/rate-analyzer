@@ -25,13 +25,6 @@ use Monolog\Logger;
 class Correlation
 {
     /**
-     * Невычисляемые поля в excel пометить следующим знаком
-     *
-     * @var string
-     */
-    const EXCEL_NAN_MARK = "NaN =(";
-
-    /**
      * @var integer
      */
     const TA_COMMON_CACHE_SIZE = 1500;
@@ -67,6 +60,11 @@ class Correlation
 
     public function findCorrelation()
     {
+        // Return if nothing to analyze
+        if ($this->aggregator->capacity() === 0) {
+            return;
+        }
+
         $variablePerCandle = $this->extended ? 21 : 19;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariableInterface[] $variables */
@@ -98,12 +96,6 @@ class Correlation
                 array_push($variables, new CandleVariableVolume($name.'_volume'));
                 array_push($variables, new CandleVariableTrades($name.'_trades'));
             }
-        }
-
-        // TODO: Refactor this.
-        // Return if nothing to analyze
-        if ($this->aggregator->capacity() === 0) {
-            return;
         }
 
         /** @var float[] $means */
