@@ -10,6 +10,8 @@ use CoinCorp\RateAnalyzer\ExchangeStateSlice;
 use Commando\Command;
 use Monolog\Logger;
 
+ini_set('memory_limit', '-1');
+
 define("CACHE_SIZE", 20);
 
 define("INDICATOR_EMA9", "EMA9");
