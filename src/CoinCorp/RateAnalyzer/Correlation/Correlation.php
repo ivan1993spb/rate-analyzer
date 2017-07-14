@@ -65,6 +65,10 @@ class Correlation
             return;
         }
 
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                                   ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ                                    *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         $variablePerCandle = $this->extended ? 21 : 19;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariableInterface[] $variables */
@@ -92,17 +96,83 @@ class Correlation
             array_push($variables, new CandleVariableRSI($name.'_close_rsi-10', 10));
             array_push($variables, new CandleVariableRSI($name.'_close_rsi-30', 30));
 
+            // TODO: Переопределить набор extended.
             if ($this->extended) {
                 array_push($variables, new CandleVariableVolume($name.'_volume'));
                 array_push($variables, new CandleVariableTrades($name.'_trades'));
             }
         }
 
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                                     ПОЛУЧЕНИЕ ГЕНЕРАТОРА                                      *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        $generator = $this->aggregator->rows();
+        if (!$generator->valid()) {
+            return;
+        }
+
+        /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+        $dataRow = $generator->current();
+        $this->log->info("Start of time range", ['time' => $dataRow->time]);
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                          СДВИГ ГЕНЕРАТОРА И ПОДГОТОВКА ПЕРЕМЕННЫХ                             *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        // Начинаем средние значения только тогда, когда все переменные готовы
+        while (true) {
+            /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+            $dataRow = $generator->current();
+            $generator->next();
+
+            foreach ($dataRow->candles as $column => $candle) {
+                // Для каждой переменной для свечи
+                for ($i = 0; $i < $variablePerCandle; $i++) {
+                    $variable_index = $variablePerCandle*$column + $i;
+                    $variable = $variables[$variable_index];
+                    $variable->update($candle);
+                }
+            }
+
+            $ready = true;
+            foreach ($variables as $variable) {
+                if (!$variable->ready()) {
+                    $ready = false;
+                    break;
+                }
+            }
+
+            if ($ready) {
+                break;
+            }
+
+            if (!$generator->valid()) {
+                return;
+            }
+        }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                             ПОДСЧЕТ СРЕДНИХ ЗНАЧЕНИЙ ПЕРЕМЕННЫХ                               *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        if (!$generator->valid()) {
+            return;
+        }
+
+        /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+        $dataRow = $generator->current();
+        $this->log->info("Start calculating mean variable values on", ['time' => $dataRow->time]);
+
         /** @var float[] $means */
         $means = array_fill(0, sizeof($variables), 0.0);
 
-        // Вычисление средних значений
-        foreach ($this->aggregator->rows() as $index => $dataRow) {
+        $index = 0;
+
+        while (true) {
+            /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+            $dataRow = $generator->current();
+
             $count = $index + 1;
             $k = ($count - 1)  / $count;
 
@@ -113,11 +183,81 @@ class Correlation
                     $variable_index = $variablePerCandle*$column + $i;
                     $variable = $variables[$variable_index];
                     $variable->update($candle);
-                    // TODO: Начинаем считать только тогда, когда переменная готова!
                     $means[$variable_index] = $means[$variable_index] * $k  + $variable->value() / $count;
                 }
             }
+
+            $index++;
+            $generator->next();
+            if (!$generator->valid()) {
+                break;
+            }
         }
+
+        foreach ($variables as $variable) {
+            $variable->free();
+        }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                                     ПОЛУЧЕНИЕ ГЕНЕРАТОРА                                      *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        $generator = $this->aggregator->rows();
+        if (!$generator->valid()) {
+            return;
+        }
+
+        /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+        $dataRow = $generator->current();
+        $this->log->info("Start of time range", ['time' => $dataRow->time]);
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                          СДВИГ ГЕНЕРАТОРА И ПОДГОТОВКА ПЕРЕМЕННЫХ                             *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        // Начинаем считать корреляцию только тогда, когда все переменные готовы
+        while (true) {
+            /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+            $dataRow = $generator->current();
+            $generator->next();
+
+            foreach ($dataRow->candles as $column => $candle) {
+                // Для каждой переменной для свечи
+                for ($i = 0; $i < $variablePerCandle; $i++) {
+                    $variable_index = $variablePerCandle*$column + $i;
+                    $variable = $variables[$variable_index];
+                    $variable->update($candle);
+                }
+            }
+
+            $ready = true;
+            foreach ($variables as $variable) {
+                if (!$variable->ready()) {
+                    $ready = false;
+                    break;
+                }
+            }
+
+            if ($ready) {
+                break;
+            }
+
+            if (!$generator->valid()) {
+                return;
+            }
+        }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                                       ПОДСЧЕТ ОТКЛОНЕНИЙ                                      *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        if (!$generator->valid()) {
+            return;
+        }
+
+        /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+        $dataRow = $generator->current();
+        $this->log->info("Start calculating on", ['time' => $dataRow->time]);
 
         /** @var float[][] $covsXYZ */
         $covsXYZ = array_fill(0, sizeof($variables), array_fill(0, sizeof($variables), 0.0));
@@ -125,7 +265,10 @@ class Correlation
         /** @var float[] $varS */
         $varS = array_fill(0, sizeof($variables), 0.0);
 
-        foreach ($this->aggregator->rows() as $index => $dataRow) {
+        while (true) {
+            /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+            $dataRow = $generator->current();
+
             foreach ($dataRow->candles as $column => $candle) {
                 // Для каждой переменной для свечи
                 for ($i = 0; $i < $variablePerCandle; $i++) {
@@ -146,6 +289,11 @@ class Correlation
             foreach ($variables as $i => $variable) {
                 $varS[$i] += pow($variable->value() - $means[$i], 2);
             }
+
+            $generator->next();
+            if (!$generator->valid()) {
+                break;
+            }
         }
 
         // Значения переменных больше не пригодяться, значит можно освободить память почистя кеши
@@ -153,11 +301,16 @@ class Correlation
             $variable->free();
         }
 
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                                       ПОДСЧЕТ КОРРЕЛЯЦИИ                                      *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
         $varS = array_map('sqrt', $varS);
 
         $this->log->info("means", $means);
         $this->log->info("varS", $varS);
 
+        /** @var float[][] $R_XYZ */
         $R_XYZ = array_fill(0, sizeof($variables), array_fill(0, sizeof($variables), 0.0));
 
         foreach ($variables as $xi => $variableX) {
@@ -187,6 +340,10 @@ class Correlation
                 }
             }
         }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         *                                        ВЫВОД РЕЗУЛЬТАТА                                       *
+         * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
         $this->log->info("Write corr table to stdout");
 
