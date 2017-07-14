@@ -46,6 +46,7 @@ class CandleVariableClosePrice implements CandleVariableInterface
      */
     public function free()
     {
+        $this->value = null;
     }
 
     /**

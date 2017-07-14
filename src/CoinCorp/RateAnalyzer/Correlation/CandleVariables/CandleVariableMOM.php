@@ -79,6 +79,7 @@ class CandleVariableMOM implements CandleVariableInterface
     public function free()
     {
         $this->cache = [];
+        $this->value = null;
     }
 
     /**

@@ -99,6 +99,7 @@ class CandleVariableADX implements CandleVariableInterface
         $this->cacheHigh = [];
         $this->cacheLow = [];
         $this->cacheClose = [];
+        $this->value = null;
     }
 
     /**

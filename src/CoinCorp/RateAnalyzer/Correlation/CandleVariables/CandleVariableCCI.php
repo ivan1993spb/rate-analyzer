@@ -99,6 +99,7 @@ class CandleVariableCCI implements CandleVariableInterface
         $this->cacheHigh = [];
         $this->cacheLow = [];
         $this->cacheClose = [];
+        $this->value = null;
     }
 
     /**

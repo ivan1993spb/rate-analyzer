@@ -46,6 +46,7 @@ class CandleVariableVolume implements CandleVariableInterface
      */
     public function free()
     {
+        $this->value = null;
     }
 
     /**
