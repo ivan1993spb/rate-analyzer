@@ -120,6 +120,8 @@ class Correlation
          *                          СДВИГ ГЕНЕРАТОРА И ПОДГОТОВКА ПЕРЕМЕННЫХ                             *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+        $this->log->info("Initialize candle variables");
+
         // Начинаем средние значения только тогда, когда все переменные готовы
         while (true) {
             /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
@@ -148,6 +150,13 @@ class Correlation
             }
 
             if (!$generator->valid()) {
+                $notReady = [];
+                foreach ($variables as $variable) {
+                    if (!$variable->ready()) {
+                        array_push($notReady, $variable->name());
+                    }
+                }
+                $this->log->warn("Cannot initialize candle variables: generator closed", ['not_ready' => $notReady]);
                 return;
             }
         }
@@ -243,6 +252,13 @@ class Correlation
             }
 
             if (!$generator->valid()) {
+                $notReady = [];
+                foreach ($variables as $variable) {
+                    if (!$variable->ready()) {
+                        array_push($notReady, $variable->name());
+                    }
+                }
+                $this->log->warn("Cannot initialize candle variables: generator closed", ['not_ready' => $notReady]);
                 return;
             }
         }
