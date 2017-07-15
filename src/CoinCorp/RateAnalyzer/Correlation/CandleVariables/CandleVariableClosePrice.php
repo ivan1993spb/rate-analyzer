@@ -38,7 +38,7 @@ class CandleVariableClosePrice implements CandleVariableInterface
      */
     public function update(Candle $candle)
     {
-        $this->value = $candle->close;
+        $this->value = (double)$candle->close;
     }
 
     /**

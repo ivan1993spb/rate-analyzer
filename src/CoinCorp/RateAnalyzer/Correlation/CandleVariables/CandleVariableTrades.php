@@ -38,7 +38,7 @@ class CandleVariableTrades implements CandleVariableInterface
      */
     public function update(Candle $candle)
     {
-        $this->value = $candle->trades;
+        $this->value = (integer)$candle->trades;
     }
 
     /**

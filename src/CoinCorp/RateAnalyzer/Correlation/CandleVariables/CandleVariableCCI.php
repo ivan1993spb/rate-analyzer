@@ -88,7 +88,7 @@ class CandleVariableCCI implements CandleVariableInterface
             return;
         }
 
-        $this->value = $arr[sizeof($arr)-1];
+        $this->value = (double)$arr[sizeof($arr)-1];
     }
 
     /**

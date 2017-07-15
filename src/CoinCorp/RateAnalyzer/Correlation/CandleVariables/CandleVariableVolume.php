@@ -38,7 +38,7 @@ class CandleVariableVolume implements CandleVariableInterface
      */
     public function update(Candle $candle)
     {
-        $this->value = $candle->volume;
+        $this->value = (double)$candle->volume;
     }
 
     /**
