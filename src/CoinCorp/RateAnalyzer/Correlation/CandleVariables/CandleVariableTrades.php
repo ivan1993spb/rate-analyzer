@@ -18,7 +18,7 @@ class CandleVariableTrades implements CandleVariableInterface
     private $name;
 
     /**
-     * @var float|null
+     * @var integer|null
      */
     private $value = null;
 
@@ -54,7 +54,7 @@ class CandleVariableTrades implements CandleVariableInterface
      */
     public function ready()
     {
-        return is_double($this->value);
+        return is_integer($this->value);
     }
 
     /**
@@ -62,7 +62,7 @@ class CandleVariableTrades implements CandleVariableInterface
      */
     public function value()
     {
-        return $this->value;
+        return doubleval($this->value);
     }
 
     /**
