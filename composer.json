@@ -9,8 +9,12 @@
         }
     ],
     "bin": [
+        "bin/candles-to-json.php",
+        "bin/correlation.php",
+        "bin/last-candles.php",
+        "bin/print-latest-prices.php",
         "bin/rate-analyzer.php",
-        "bin/correlation.php"
+        "bin/scan-candle-emitter.php"
     ],
     "autoload": {
         "psr-4": {
