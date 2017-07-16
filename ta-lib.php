@@ -19,6 +19,17 @@ if (!defined("TRADER_ERR_SUCCESS")) {
     define("TRADER_ERR_BAD_PARAM", 2);
 }
 
+if (!function_exists("trader_errno")) {
+    /**
+     * @return integer
+     * @link http://php.net/manual/en/function.trader-errno.php
+     */
+    function trader_errno()
+    {
+        return 0;
+    }
+}
+
 if (!function_exists("trader_macd")) {
     /**
      * @param array   $real
@@ -31,17 +42,6 @@ if (!function_exists("trader_macd")) {
     function trader_macd($real, $fastPeriod, $slowPeriod, $signalPeriod)
     {
         return false;
-    }
-}
-
-if (!function_exists("trader_errno")) {
-    /**
-     * @return integer
-     * @link http://php.net/manual/en/function.trader-errno.php
-     */
-    function trader_errno()
-    {
-        return 0;
     }
 }
 
