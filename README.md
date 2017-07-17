@@ -8,7 +8,9 @@ You need docker
 2. Test: `make test`
 3. Build image `make build`
 
-## Установка коротких комманд
+## Commands
+
+### Install short commands
 
 ```bash
 alias cc-candles-to-json="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/candles-to-json.php"
@@ -18,12 +20,10 @@ alias cc-latest-prices="docker run --rm -v \$(pwd):/workdir -w /workdir registry
 alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/scan-candle-emitter.php"
 ```
 
-`cc-candles-to-json` – извлечь свечи из БД в json файл
+### Command descriptions
 
-`cc-correlation` – json файл с корреляцией (все от всех)
-
-`cc-last-candles` – последние свечи по всем валютным парам
-
-`cc-latest-prices` – последние цены
-
-`cc-scan-candle-emitter` – получить markdown файл со всеми промежутками (и разрывами) данных, которые есть в БД по всем валютным парам
+* `cc-candles-to-json` - сделать срез графиков в json файл;
+* `cc-correlation` - сгенерировать json файл с коэффециентами корреляции;
+* `cc-last-candles` - последние свечи по всем валютным парам;
+* `cc-latest-prices` - последние цены;
+* `cc-scan-candle-emitter` - получить файл со всеми промежутками данных, которые есть в БД по всем валютным парам.
