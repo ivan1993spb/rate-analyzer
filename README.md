@@ -20,10 +20,10 @@ alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir re
 
 `cc-candles-to-json` – извлечь свечи из БД в json файл
 
-`cc-correlation' – json файл с корреляцией (все от всех)
+`cc-correlation` – json файл с корреляцией (все от всех)
 
 `cc-last-candles` – последние свечи по всем валютным парам
 
 `cc-latest-prices` – последние цены
 
-`cc-scan-candle-emitter` – получить html файл со всеми промежутками (и разрывами) данных, которые есть в БД по всем валютным парам
+`cc-scan-candle-emitter` – получить markdown файл со всеми промежутками (и разрывами) данных, которые есть в БД по всем валютным парам
