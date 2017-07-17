@@ -11,9 +11,9 @@ use Monolog\Logger;
 
 $cmd = new Command();
 $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
-$cmd->option('j')->aka('json')->describedAs('Output as JSON')->boolean();
-$cmd->option('m')->aka('md')->describedAs('Output as markdown')->boolean();
-$cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
+$cmd->option('j')->aka('json')->describedAs('Filename for output as JSON')->boolean();
+$cmd->option('m')->aka('md')->describedAs('Filename output as markdown')->boolean();
+$cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch (Each candle equal one minute by default)')->default(1)->must(function($value) {
     return is_numeric($value) && $value > 0;
 });
 
