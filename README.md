@@ -1,4 +1,3 @@
-
 # rate-analyzer
 
 ## Install
@@ -18,3 +17,13 @@ alias cc-last-candles="docker run --rm -v \$(pwd):/workdir -w /workdir registry.
 alias cc-latest-prices="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/print-latest-prices.php"
 alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/scan-candle-emitter.php"
 ```
+
+`cc-candles-to-json` – извлечь свечи из БД в json файл
+
+`cc-correlation' – json файл с корреляцией (все от всех)
+
+`cc-last-candles` – последние свечи по всем валютным парам
+
+`cc-latest-prices` – последние цены
+
+`cc-scan-candle-emitter` – получить html файл со всеми промежутками (и разрывами) данных, которые есть в БД по всем валютным парам
