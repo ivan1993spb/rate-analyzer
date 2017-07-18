@@ -128,8 +128,14 @@ if (!$generator->valid()) {
 
 
 
+$dataRow = $generator->current();
+$firstPair = $dataRow->candles[PAIR_FIRST];
+$secondPair = $dataRow->candles[PAIR_SECOND];
+
+
 $slice = new ExchangeStateSlice();
-$slice->seriesNames = ["Deviation", "Deviation DI+", "Deviation DI-", "Common deposit BTC", "First price", "Second price"];
+$slice->seriesNames = ["Deviation", "Deviation DI+", "Deviation DI-",
+    "Common deposit BTC", "Price ".$firstPair->label, "Price ".$secondPair->label];
 $slice->series = array_fill(0, sizeof($slice->seriesNames), []);
 
 
@@ -160,6 +166,10 @@ $startBTC = $firstBTC + $secondBTC + $depositFirst*$firstPair->close + $depositS
 
 $green = 0;
 $red = 0;
+
+$fee = 0.002;
+$feeResult = 0.0;
+
 
 
 while (true) {
@@ -254,11 +264,15 @@ while (true) {
             $green += 1;
             if ($positionFirst != 'long') {
                 $positionFirst = 'long';
+                $feeResult += $firstBTC / $firstPair->close * $fee;
+
                 $depositFirst += $firstBTC / $firstPair->close;
                 $firstBTC = 0;
             }
             if ($positionSecond != 'short') {
                 $positionSecond = 'short';
+                $feeResult += $depositSecond * $secondPair->close * $fee;
+
                 $secondBTC += $depositSecond * $secondPair->close;
                 $depositSecond = 0;
             }
@@ -274,11 +288,18 @@ while (true) {
             $red += 1;
             if ($positionFirst != 'short') {
                 $positionFirst = 'short';
+
+                $feeResult += $depositFirst * $firstPair->close * $fee;
+
                 $firstBTC += $depositFirst * $firstPair->close;
                 $depositFirst = 0;
             }
             if ($positionSecond != 'long') {
                 $positionSecond = 'long';
+
+                $feeResult += $secondBTC / $secondPair->close * $fee;
+
+
                 $depositSecond += $secondBTC / $secondPair->close;
                 $secondBTC = 0;
             }
@@ -343,6 +364,7 @@ $logger->info("END", [
     'proc'   => sprintf("%d%%", round($result/$startBTC*100)),
     'green'  => $green,
     'red'    => $red,
+    'fee'    => $feeResult,
 ]);
 
 file_put_contents("php://stdout", json_encode($slice));
