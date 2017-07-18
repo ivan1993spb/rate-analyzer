@@ -69,7 +69,7 @@ class Correlation
          *                                   ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ                                    *
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-        $variablePerCandle = $this->extended ? 21 : 19;
+        $variablePerCandle = $this->extended ? 21 : 1;
 
         /** @var \CoinCorp\RateAnalyzer\Correlation\CandleVariableInterface[] $variables */
         $variables = [];
@@ -77,29 +77,28 @@ class Correlation
         // Для каждой свечи добавляем три типа переменных
         foreach ($this->aggregator->emittersNames() as $name) {
             array_push($variables, new CandleVariableClosePrice($name.'_close'));
-            array_push($variables, new CandleVariableSMA($name.'_close_sma-10', 10));
-            array_push($variables, new CandleVariableSMA($name.'_close_sma-35', 35));
-            array_push($variables, new CandleVariableEMA($name.'_close_ema-9', 9, self::TA_COMMON_CACHE_SIZE));
-            array_push($variables, new CandleVariableEMA($name.'_close_ema-30', 9, self::TA_COMMON_CACHE_SIZE));
-            array_push($variables, new CandleVariableMACD($name.'_close_macd-5-35-5', 5, 35, 5, self::TA_COMMON_CACHE_SIZE));
-            array_push($variables, new CandleVariableMACD($name.'_close_macd-12-26-9', 12, 26, 9, self::TA_COMMON_CACHE_SIZE));
-            array_push($variables, new CandleVariableCCI($name.'_close_cci-10', 10));
-            array_push($variables, new CandleVariableCCI($name.'_close_cci-30', 30));
-            array_push($variables, new CandleVariableADX($name.'_close_adx-10', 10));
-            array_push($variables, new CandleVariableADX($name.'_close_adx-30', 30));
-            array_push($variables, new CandleVariableMOM($name.'_close_mom-10', 10));
-            array_push($variables, new CandleVariableMOM($name.'_close_mom-30', 30));
-            array_push($variables, new CandleVariableCMO($name.'_close_cmo-10', 10));
-            array_push($variables, new CandleVariableCMO($name.'_close_cmo-30', 30));
-            array_push($variables, new CandleVariableATR($name.'_close_atr-10', 10));
-            array_push($variables, new CandleVariableATR($name.'_close_atr-30', 30));
-            array_push($variables, new CandleVariableRSI($name.'_close_rsi-10', 10));
-            array_push($variables, new CandleVariableRSI($name.'_close_rsi-30', 30));
 
-            // TODO: Переопределить набор extended.
             if ($this->extended) {
                 array_push($variables, new CandleVariableVolume($name.'_volume'));
                 array_push($variables, new CandleVariableTrades($name.'_trades'));
+                array_push($variables, new CandleVariableSMA($name.'_close_sma-10', 10));
+                array_push($variables, new CandleVariableSMA($name.'_close_sma-35', 35));
+                array_push($variables, new CandleVariableEMA($name.'_close_ema-9', 9, self::TA_COMMON_CACHE_SIZE));
+                array_push($variables, new CandleVariableEMA($name.'_close_ema-30', 9, self::TA_COMMON_CACHE_SIZE));
+                array_push($variables, new CandleVariableMACD($name.'_close_macd-5-35-5', 5, 35, 5, self::TA_COMMON_CACHE_SIZE));
+                array_push($variables, new CandleVariableMACD($name.'_close_macd-12-26-9', 12, 26, 9, self::TA_COMMON_CACHE_SIZE));
+                array_push($variables, new CandleVariableCCI($name.'_close_cci-10', 10));
+                array_push($variables, new CandleVariableCCI($name.'_close_cci-30', 30));
+                array_push($variables, new CandleVariableADX($name.'_close_adx-10', 10));
+                array_push($variables, new CandleVariableADX($name.'_close_adx-30', 30));
+                array_push($variables, new CandleVariableMOM($name.'_close_mom-10', 10));
+                array_push($variables, new CandleVariableMOM($name.'_close_mom-30', 30));
+                array_push($variables, new CandleVariableCMO($name.'_close_cmo-10', 10));
+                array_push($variables, new CandleVariableCMO($name.'_close_cmo-30', 30));
+                array_push($variables, new CandleVariableATR($name.'_close_atr-10', 10));
+                array_push($variables, new CandleVariableATR($name.'_close_atr-30', 30));
+                array_push($variables, new CandleVariableRSI($name.'_close_rsi-10', 10));
+                array_push($variables, new CandleVariableRSI($name.'_close_rsi-30', 30));
             }
         }
 
