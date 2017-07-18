@@ -20,6 +20,21 @@ $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources
 $cmd->option('b')->aka('batch-size')->describedAs('Candles number to batch')->default(1)->must(function($value) {
     return is_numeric($value) && $value > 0;
 });
+$cmd->option('from')->describedAs('Time UTC')->default(new DateTime("0001-01-01", new DateTimeZone('UTC')))->cast(function($value) {
+    return new DateTime($value, new DateTimeZone('UTC'));
+});
+$cmd->option('to')->describedAs('Time UTC')->default(new DateTime('now', new DateTimeZone('UTC')))->cast(function($value) {
+    return new DateTime($value, new DateTimeZone('UTC'));
+});
+
+
+/** @var \DateTime $from */
+$from = $cmd['from'];
+/** @var \DateTime $to */
+$to = $cmd['to'];
+
+
+
 
 $logger = new Logger('logger');
 $aggregator = new CandleAggregator($logger);
@@ -114,7 +129,7 @@ if (!$generator->valid()) {
 
 
 $slice = new ExchangeStateSlice();
-$slice->seriesNames = ["Deviation", "Deviation SMA", "Deviation DI+", "Deviation DI-", "First price", "Second price"];
+$slice->seriesNames = ["Deviation", "Deviation DI+", "Deviation DI-", "Common deposit BTC", "First price", "Second price"];
 $slice->series = array_fill(0, sizeof($slice->seriesNames), []);
 
 
@@ -132,11 +147,19 @@ $firstBTC = 1.0;
 $depositFirst = 0.0;
 $positionFirst = null;
 
-$secondBTC = 0.0;
-$depositSecond = 1.0;
+$secondBTC = 1.0;
+$depositSecond = 0.0;
 $positionSecond = null;
+
+$dataRow = $generator->current();
+$firstPair = $dataRow->candles[PAIR_FIRST];
+$secondPair = $dataRow->candles[PAIR_SECOND];
+$startBTC = $firstBTC + $secondBTC + $depositFirst*$firstPair->close + $depositSecond*$secondPair->close;
 //////////////////////////////
 
+
+$green = 0;
+$red = 0;
 
 
 while (true) {
@@ -182,7 +205,20 @@ while (true) {
 
     // -- End calculate deviation --
 
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
     if (sizeof($deviations) === DEVIATION_CACHE_SIZE) {
+        if ($dataRow->time->getTimestamp() < $from->getTimestamp()) {
+            goto next;
+        }
+        if ($dataRow->time->getTimestamp() > $to->getTimestamp()) {
+            break;
+        }
+
+
         $deviationsMinus = array_map(function ($value) {
             return $value > 0 ? 0 : $value;
         }, $deviations);
@@ -208,12 +244,14 @@ while (true) {
         // -- End calculate indicators --
 
 
-        if ($deviation < $deviationSMA4 && $deviationSMA4 < $deviationSMA9 && $deviationSMA9 < 0 && $state != 1 && $deviationMinusDI > 70) {
+        if ($deviation < $deviationSMA4 && $deviationSMA4 < $deviationSMA9 && $deviationSMA9 < 0 && $state != 1
+            && $deviationMinusDI > 65 && $deviationPlusDI < 35) {
             $state = 1;
             array_push($slice->verticalLines, [
                 'color' => 'green',
                 'value' => $dataRow->time->getTimestamp(),
             ]);
+            $green += 1;
             if ($positionFirst != 'long') {
                 $positionFirst = 'long';
                 $depositFirst += $firstBTC / $firstPair->close;
@@ -224,16 +262,16 @@ while (true) {
                 $secondBTC += $depositSecond * $secondPair->close;
                 $depositSecond = 0;
             }
-        } elseif ($state == 1) {
-//            $state = 0;
         }
 
-        if ($deviation > $deviationSMA4 && $deviationSMA4 > $deviationSMA9 && $deviationSMA9 > 0 && $state != 2 && $deviationPlusDI > 70) {
+        if ($deviation > $deviationSMA4 && $deviationSMA4 > $deviationSMA9 && $deviationSMA9 > 0 && $state != 2
+            && $deviationPlusDI > 65 && $deviationMinusDI < 35) {
             $state = 2;
             array_push($slice->verticalLines, [
                 'color' => 'red',
                 'value' => $dataRow->time->getTimestamp(),
             ]);
+            $red += 1;
             if ($positionFirst != 'short') {
                 $positionFirst = 'short';
                 $firstBTC += $depositFirst * $firstPair->close;
@@ -244,8 +282,6 @@ while (true) {
                 $depositSecond += $secondBTC / $secondPair->close;
                 $secondBTC = 0;
             }
-        } elseif ($state == 2) {
-//            $state = 0;
         }
 
 
@@ -257,15 +293,18 @@ while (true) {
         ]);
         array_push($slice->series[1], [
             'start' => $dataRow->time->getTimestamp(),
-            'price' => $deviationSMA4,
+            'price' => $deviationPlusDI,
         ]);
         array_push($slice->series[2], [
             'start' => $dataRow->time->getTimestamp(),
-            'price' => $deviationPlusDI,
+            'price' => $deviationMinusDI,
         ]);
+
+        $deposit = $firstBTC + $depositFirst*$firstPair->close + $secondBTC + $depositSecond*$secondPair->close;
+
         array_push($slice->series[3], [
             'start' => $dataRow->time->getTimestamp(),
-            'price' => $deviationMinusDI,
+            'price' => $deposit,
         ]);
         array_push($slice->series[4], [
             'start' => $dataRow->time->getTimestamp(),
@@ -277,6 +316,12 @@ while (true) {
         ]);
     }
 
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    next:
+
     $generator->next();
     if (!$generator->valid()) {
         break;
@@ -284,20 +329,20 @@ while (true) {
 }
 
 
+/** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
+//$dataRow = $generator->current();
+
+$firstPair = $dataRow->candles[PAIR_FIRST];
+$secondPair = $dataRow->candles[PAIR_SECOND];
+
+$result = $firstBTC + $depositFirst*$firstPair->close + $secondBTC + $depositSecond*$secondPair->close;
+
 $logger->info("END", [
-    'firstBTC' => $firstBTC,
-    'depositFirst' => $depositFirst,
-    'secondBTC' => $secondBTC,
-    'depositSecond' => $depositSecond,
+    'result' => $result,
+    'start'  => $startBTC,
+    'proc'   => sprintf("%d%%", round($result/$startBTC*100)),
+    'green'  => $green,
+    'red'    => $red,
 ]);
 
 file_put_contents("php://stdout", json_encode($slice));
-
-
-$generator = $aggregator->rows();
-if (!$generator->valid()) {
-    $logger->warn("Empty aggregator");
-    exit;
-}
-
-
