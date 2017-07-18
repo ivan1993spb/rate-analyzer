@@ -154,3 +154,33 @@ if (!function_exists("trader_rsi")) {
         return false;
     }
 }
+
+if (!function_exists("trader_plus_di")) {
+    /**
+     * @param array   $high
+     * @param array   $low
+     * @param array   $close
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-plus-di.php
+     */
+    function trader_plus_di($high, $low, $close, $timePeriod)
+    {
+        return false;
+    }
+}
+
+if (!function_exists("trader_minus_di")) {
+    /**
+     * @param array   $high
+     * @param array   $low
+     * @param array   $close
+     * @param integer $timePeriod
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-minus-di.php
+     */
+    function trader_minus_di($high, $low, $close, $timePeriod)
+    {
+        return false;
+    }
+}
