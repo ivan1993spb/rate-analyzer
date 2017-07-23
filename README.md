@@ -18,6 +18,7 @@ alias cc-correlation="docker run --rm -v \$(pwd):/workdir -w /workdir registry.g
 alias cc-last-candles="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/last-candles.php"
 alias cc-latest-prices="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/print-latest-prices.php"
 alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/scan-candle-emitter.php"
+alias cc-stats-trade-pairs="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/trade-pair-of-pairs.php"
 ```
 
 ### Command descriptions
@@ -26,4 +27,5 @@ alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir re
 * `cc-correlation` - сгенерировать json файл с коэффециентами корреляции;
 * `cc-last-candles` - последние свечи по всем валютным парам;
 * `cc-latest-prices` - последние цены;
-* `cc-scan-candle-emitter` - получить файл со всеми промежутками данных, которые есть в БД по всем валютным парам.
+* `cc-scan-candle-emitter` - получить файл со всеми промежутками данных, которые есть в БД по всем валютным парам;
+* `cc-stats-trade-pairs` - генерация статистики для парного трейдинга.
