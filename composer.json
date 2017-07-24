@@ -14,7 +14,8 @@
         "bin/last-candles.php",
         "bin/print-latest-prices.php",
         "bin/rate-analyzer.php",
-        "bin/scan-candle-emitter.php"
+        "bin/scan-candle-emitter.php",
+        "bin/trade-pair-of-pairs.php"
     ],
     "autoload": {
         "psr-4": {

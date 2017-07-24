@@ -19,7 +19,7 @@ ini_set("trader.real_precision", 10);
 //
 
 define("DEFAULT_PERIOD_SMA_RATIO", 60*24*7);
-define("DEFAULT_BERIOD_BANDS", 5);
+define("DEFAULT_PERIOD_BANDS", 5);
 
 
 define("CANDLE_TRADE_PAIR_FIRST", 0);
@@ -64,7 +64,7 @@ $cmd->option('first-fee')->describedAs('First pair trade fee')->default(0)->must
 $cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0)->must(function($value) {
     return is_double($value);
 });
-$cmd->option('bbands-period')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_BERIOD_BANDS);
+$cmd->option('period-bbands')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_PERIOD_BANDS);
 
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
@@ -85,7 +85,7 @@ $firstPairFee = doubleval($cmd['first-fee']);
 /** @var double $secondPairFee */
 $secondPairFee = doubleval($cmd['second-fee']);
 /** @var integer $bbandsPeriod */
-$bbandsPeriod = intval($cmd['bbands-period']);
+$bbandsPeriod = intval($cmd['period-bbands']);
 $deviationsCacheSize = $bbandsPeriod;
 
 //
