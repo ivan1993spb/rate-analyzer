@@ -308,4 +308,6 @@ while ($generator->valid()) {
 // Print time slice
 //
 
+// TODO: Добавить титл для среза.
+
 file_put_contents("php://stdout", json_encode($slice));
