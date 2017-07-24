@@ -6,6 +6,8 @@ require __DIR__.'/../vendor/autoload.php';
 use CoinCorp\RateAnalyzer\CandleAggregator;
 use CoinCorp\RateAnalyzer\CandleBatcher;
 use CoinCorp\RateAnalyzer\CandleSource;
+use CoinCorp\RateAnalyzer\Chart;
+use CoinCorp\RateAnalyzer\ChartPoint;
 use CoinCorp\RateAnalyzer\ExchangeStateSlice;
 use Commando\Command;
 use Monolog\Logger;
@@ -17,11 +19,11 @@ ini_set("trader.real_precision", 10);
 //
 
 define("DEFAULT_PERIOD_SMA_RATIO", 60*24*7);
+define("DEFAULT_BERIOD_BANDS", 5);
+
 
 define("CANDLE_TRADE_PAIR_FIRST", 0);
 define("CANDLE_TRADE_PAIR_SECOND", 1);
-
-define("CACHE_SIZE_DEVIATION", 18);
 
 // Графики на временном срезе
 define("CHART_CLOSE_PRICE_FIRST_PAIR", 0);
@@ -30,6 +32,12 @@ define("CHART_DEVIATION", 2);
 define("CHART_REAL_PAIRS_DIFF", 3);
 define("CHART_REAL_RATIO_DIVIDE_RATIO_SMA", 4);
 define("CHART_SIGMA", 5);
+
+// Данные
+define("CHART_DEVIATION_SERIE_DEVIATION", 0);
+define("CHART_DEVIATION_SERIE_DEVIATION_LOWER_BAND", 1);
+define("CHART_DEVIATION_SERIE_DEVIATION_SMA", 2);
+define("CHART_DEVIATION_SERIE_DEVIATION_UPPER_BAND", 3);
 
 //
 // Commands
@@ -56,6 +64,7 @@ $cmd->option('first-fee')->describedAs('First pair trade fee')->default(0)->must
 $cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0)->must(function($value) {
     return is_double($value);
 });
+$cmd->option('bbands-period')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_BERIOD_BANDS);
 
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
@@ -75,6 +84,9 @@ $cacheSizeRatioTail = $periodRatioSMA - 1;
 $firstPairFee = doubleval($cmd['first-fee']);
 /** @var double $secondPairFee */
 $secondPairFee = doubleval($cmd['second-fee']);
+/** @var integer $bbandsPeriod */
+$bbandsPeriod = intval($cmd['bbands-period']);
+$deviationsCacheSize = $bbandsPeriod;
 
 //
 // Init logging
@@ -164,14 +176,19 @@ for ($i = 0; $i < $cacheSizeRatioTail+$cacheSizeRatio; $i++) {
 $dataRow = $generator->current();
 $firstPair = $dataRow->candles[CANDLE_TRADE_PAIR_FIRST];
 $secondPair = $dataRow->candles[CANDLE_TRADE_PAIR_SECOND];
-$slice = new ExchangeStateSlice([
-    CHART_CLOSE_PRICE_FIRST_PAIR      => sprintf("Close price %s", $firstPair->label),
-    CHART_CLOSE_PRICE_SECOND_PAIR     => sprintf("Close price %s", $secondPair->label),
-    CHART_DEVIATION                   => sprintf("Deviation %d", $periodRatioSMA),
-    CHART_REAL_PAIRS_DIFF             => "Real diff",
-    CHART_REAL_RATIO_DIVIDE_RATIO_SMA => sprintf("Ratio/SMA_%d(Ratio)", $periodRatioSMA),
-    CHART_SIGMA                       => sprintf("Sigma Ratio and SMA_%d(Ratio)", $periodRatioSMA),
+
+$slice = new ExchangeStateSlice;
+$slice->charts[CHART_CLOSE_PRICE_FIRST_PAIR] = new Chart(sprintf("Close price %s", $firstPair->label), [$firstPair->label]);
+$slice->charts[CHART_CLOSE_PRICE_SECOND_PAIR] = new Chart(sprintf("Close price %s", $secondPair->label), [$secondPair->label]);
+$slice->charts[CHART_DEVIATION] = new Chart(sprintf("Deviation %d", $periodRatioSMA), [
+    'Deviation',
+    'Lower band',
+    'Deviation SMA',
+    'Upper band',
 ]);
+$slice->charts[CHART_REAL_PAIRS_DIFF] = new Chart("Real diff", ["Real diff"]);
+$slice->charts[CHART_REAL_RATIO_DIVIDE_RATIO_SMA] = new Chart(sprintf("Ratio/SMA_%d(Ratio)", $periodRatioSMA), ["Ratio/SMA"]);
+$slice->charts[CHART_SIGMA] = new Chart(sprintf("Sigma Ratio and SMA_%d(Ratio)", $periodRatioSMA), ["Sigma Ratio/SMA"]);
 
 //
 // Calculate statistics
@@ -208,7 +225,7 @@ while ($generator->valid()) {
     $sigma = sqrt($sum/sizeof($ratioPrices));
     $deviation = ($ratio-$ratioSMA) / $sigma;
     array_push($deviations, $deviation);
-    while (sizeof($deviations) > CACHE_SIZE_DEVIATION) {
+    while (sizeof($deviations) > $deviationsCacheSize) {
         array_shift($deviations);
     }
     $logger->info("Stats", [
@@ -229,31 +246,53 @@ while ($generator->valid()) {
     }
     // *** End check time range ***
 
+    // *** Begin calculate Bollinger Bands
+    $bbands = trader_bbands($deviations, $bbandsPeriod, 1, 1, TRADER_MA_TYPE_EMA);
+    // *** End calculate Bollinger Bands
+
     // *** Begin create charts ***
-    array_push($slice->series[CHART_CLOSE_PRICE_FIRST_PAIR], [
-        'start' => $dataRow->time->getTimestamp(),
-        'price' => $firstPair->close,
-    ]);
-    array_push($slice->series[CHART_CLOSE_PRICE_SECOND_PAIR], [
-        'start' => $dataRow->time->getTimestamp(),
-        'price' => $secondPair->close,
-    ]);
-    array_push($slice->series[CHART_DEVIATION], [
-        'start' => $dataRow->time->getTimestamp(),
-        'price' => $deviation,
-    ]);
-    array_push($slice->series[CHART_REAL_PAIRS_DIFF], [
-        'start' => $dataRow->time->getTimestamp(),
-        'price' => $firstPair->close-$secondPair->close,
-    ]);
-    array_push($slice->series[CHART_REAL_RATIO_DIVIDE_RATIO_SMA], [
-        'start' => $dataRow->time->getTimestamp(),
-        'price' => $ratio/$ratioSMA,
-    ]);
-    array_push($slice->series[CHART_SIGMA], [
-        'start' => $dataRow->time->getTimestamp(),
-        'price' => $sigma,
-    ]);
+    array_push(
+        $slice->charts[CHART_CLOSE_PRICE_FIRST_PAIR]->series[0],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $firstPair->close)
+    );
+    array_push(
+        $slice->charts[CHART_CLOSE_PRICE_SECOND_PAIR]->series[0],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $secondPair->close)
+    );
+    array_push(
+        $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $deviation)
+    );
+    if (is_array($bbands)) {
+        // Bollinger Bands
+        $bbands[0] = array_values($bbands[0]);
+        array_push(
+            $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_LOWER_BAND],
+            new ChartPoint($dataRow->time->getTimestamp()*1000, $bbands[0][sizeof($bbands[0])-1])
+        );
+        $bbands[1] = array_values($bbands[1]);
+        array_push(
+            $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_SMA],
+            new ChartPoint($dataRow->time->getTimestamp()*1000, $bbands[1][sizeof($bbands[1])-1])
+        );
+        $bbands[2] = array_values($bbands[2]);
+        array_push(
+            $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_UPPER_BAND],
+            new ChartPoint($dataRow->time->getTimestamp()*1000, $bbands[2][sizeof($bbands[2])-1])
+        );
+    }
+    array_push(
+        $slice->charts[CHART_REAL_PAIRS_DIFF]->series[0],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $firstPair->close-$secondPair->close)
+    );
+    array_push(
+        $slice->charts[CHART_REAL_RATIO_DIVIDE_RATIO_SMA]->series[0],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $ratio/$ratioSMA)
+    );
+    array_push(
+        $slice->charts[CHART_SIGMA]->series[0],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $sigma)
+    );
     // *** Begin create charts ***
 
     // *** Begin finalize iteration ***
