@@ -19,6 +19,14 @@ if (!defined("TRADER_ERR_SUCCESS")) {
     define("TRADER_ERR_BAD_PARAM", 2);
 }
 
+if (!defined("TRADER_MA_TYPE_SMA")) {
+    define("TRADER_MA_TYPE_SMA", 0);
+}
+
+if (!defined("TRADER_MA_TYPE_EMA")) {
+    define("TRADER_MA_TYPE_EMA", 1);
+}
+
 if (!function_exists("trader_errno")) {
     /**
      * @return integer
@@ -180,6 +188,22 @@ if (!function_exists("trader_minus_di")) {
      * @link http://php.net/manual/en/function.trader-minus-di.php
      */
     function trader_minus_di($high, $low, $close, $timePeriod)
+    {
+        return false;
+    }
+}
+
+if (!function_exists("trader_bbands")) {
+    /**
+     * @param array   $real
+     * @param integer $timePeriod
+     * @param float   $nbDevUp
+     * @param float   $nbDevDn
+     * @param integer $mAType
+     * @return array|boolean
+     * @link http://php.net/manual/en/function.trader-bbands.php
+     */
+    function trader_bbands($real, $timePeriod, $nbDevUp = 0, $nbDevDn = 0, $mAType = TRADER_MA_TYPE_SMA)
     {
         return false;
     }
