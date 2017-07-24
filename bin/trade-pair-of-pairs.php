@@ -160,20 +160,18 @@ for ($i = 0; $i < $cacheSizeRatioTail+$cacheSizeRatio; $i++) {
 // Init time slice
 //
 
-$slice = new ExchangeStateSlice;
 /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
 $dataRow = $generator->current();
 $firstPair = $dataRow->candles[CANDLE_TRADE_PAIR_FIRST];
 $secondPair = $dataRow->candles[CANDLE_TRADE_PAIR_SECOND];
-$slice->seriesNames = [
+$slice = new ExchangeStateSlice([
     CHART_CLOSE_PRICE_FIRST_PAIR      => sprintf("Close price %s", $firstPair->label),
     CHART_CLOSE_PRICE_SECOND_PAIR     => sprintf("Close price %s", $secondPair->label),
     CHART_DEVIATION                   => sprintf("Deviation %d", $periodRatioSMA),
     CHART_REAL_PAIRS_DIFF             => "Real diff",
     CHART_REAL_RATIO_DIVIDE_RATIO_SMA => sprintf("Ratio/SMA_%d(Ratio)", $periodRatioSMA),
     CHART_SIGMA                       => sprintf("Sigma Ratio and SMA_%d(Ratio)", $periodRatioSMA),
-];
-$slice->series = array_fill(0, sizeof($slice->seriesNames), []);
+]);
 
 //
 // Calculate statistics

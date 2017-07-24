@@ -29,4 +29,15 @@ class ExchangeStateSlice
      * @var string[]
      */
     public $seriesNames = [];
+
+    /**
+     * ExchangeStateSlice constructor.
+     *
+     * @param string[] $seriesNames
+     */
+    public function __construct($seriesNames = [])
+    {
+        $this->seriesNames = $seriesNames;
+        $this->series = array_fill(0, sizeof($seriesNames), []);
+    }
 }
