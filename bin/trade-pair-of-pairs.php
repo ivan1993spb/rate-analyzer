@@ -9,6 +9,7 @@ use CoinCorp\RateAnalyzer\CandleSource;
 use CoinCorp\RateAnalyzer\Chart;
 use CoinCorp\RateAnalyzer\ChartPoint;
 use CoinCorp\RateAnalyzer\ExchangeStateSlice;
+use CoinCorp\Testing\Account;
 use Commando\Command;
 use Monolog\Logger;
 
@@ -39,6 +40,10 @@ define("CHART_DEVIATION_SERIE_DEVIATION_LOWER_BAND", 1);
 define("CHART_DEVIATION_SERIE_DEVIATION_SMA", 2);
 define("CHART_DEVIATION_SERIE_DEVIATION_UPPER_BAND", 3);
 
+// Состояния торгового бота
+define("STATE_DEVIATION_PLUS", 0);
+define("STATE_DEVIATION_MINUS", 1);
+
 //
 // Commands
 //
@@ -60,11 +65,10 @@ $cmd->option('period-sma-ratio')->describedAs('Period for SMA(pairs ratio) in mi
 $cmd->option('period-bbands')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_PERIOD_BANDS)->must(function($value) {
     return $value > 1 && $value <= 100000;
 });
-// TODO: Использовать эти значения.
-$cmd->option('first-fee')->describedAs('First pair trade fee')->default(0)->must(function($value) {
+$cmd->option('first-fee')->describedAs('First pair trade fee')->default(0.002)->must(function($value) {
     return is_double($value);
 });
-$cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0)->must(function($value) {
+$cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0.002)->must(function($value) {
     return is_double($value);
 });
 
@@ -84,7 +88,6 @@ $cacheSizeRatioTail = $periodRatioSMA - 1;
 /** @var integer $bBandsPeriod */
 $bBandsPeriod = intval($cmd['period-bbands']);
 $deviationsCacheSize = $bBandsPeriod;
-// TODO: Использовать эти значения.
 /** @var double $firstPairFee */
 $firstPairFee = doubleval($cmd['first-fee']);
 /** @var double $secondPairFee */
@@ -199,6 +202,12 @@ $slice->charts[CHART_SIGMA] = new Chart(sprintf("Sigma Ratio and SMA_%d(Ratio)",
 /** @var float[] $deviations */
 $deviations = [];
 
+/** @var integer|null $state */
+$state = null;
+
+$firstAccount = new Account(1.0, 0.0);
+$secondAccount = new Account(1.0, 0.0);
+
 while ($generator->valid()) {
     // *** Begin prepare ratio caches ***
     /** @var \CoinCorp\RateAnalyzer\DataRow $dataRow */
@@ -263,14 +272,19 @@ while ($generator->valid()) {
 
     // *** Begin calculate Bollinger Bands
     /** @var float[][]|false $bBands */
-    $bBands = trader_bbands($deviations, $bBandsPeriod, 1, 1, TRADER_MA_TYPE_EMA);
-    $bBands[0] = array_values($bBands[0]);
-    $bBands[2] = array_values($bBands[2]);
+    $bBands = trader_bbands($deviations, $bBandsPeriod, -1, -1, TRADER_MA_TYPE_EMA);
+    $deviationLowerBandValues = array_values($bBands[0]);
+    $deviationUpperBandValues = array_values($bBands[2]);
 
     /** @var float $deviationLowerBand */
-    $deviationLowerBand = $bBands[0][sizeof($bBands[0])-1];
+    $deviationLowerBand = $deviationLowerBandValues[sizeof($deviationLowerBandValues)-1];
     /** @var float $deviationUpperBand */
-    $deviationUpperBand = $bBands[2][sizeof($bBands[2])-1];
+    $deviationUpperBand = $deviationUpperBandValues[sizeof($deviationUpperBandValues)-1];
+
+    $logger->info("Bollinger Bands", [
+        'deviationLowerBand' => $deviationLowerBand,
+        'deviationUpperBand' => $deviationUpperBand,
+    ]);
     // *** End calculate Bollinger Bands
 
     // *** Begin create charts ***
@@ -312,9 +326,54 @@ while ($generator->valid()) {
     );
     // *** Begin create charts ***
 
-    // *** Begin test trade
-    // TODO: Create test trade.
-    // *** End test trade
+    // *** Begin draw lines ***
+    if ($state !== STATE_DEVIATION_MINUS) {
+        if ($deviation < 0 && $deviationSMA2 < 0 && $deviationLowerBand < 0 && $deviation < $deviationLowerBand &&
+            $deviationSMA2 < $deviationLowerBand) {
+
+            $logger->info("Change state", [
+                'time'               => $dataRow->time,
+                'state'              => STATE_DEVIATION_MINUS,
+                'deviation'          => $deviation,
+                'deviationSMA2'      => $deviationSMA2,
+                'deviationLowerBand' => $deviationLowerBand,
+            ]);
+
+            $state = STATE_DEVIATION_MINUS;
+
+            array_push($slice->verticalLines, [
+                'color' => 'green',
+                'value' => $dataRow->time->getTimestamp(),
+            ]);
+
+            $firstAccount->long($firstPair->close, $firstPairFee);
+            $secondAccount->short($secondPair->close, $secondPairFee);
+        }
+    }
+    if ($state !== STATE_DEVIATION_PLUS) {
+        if ($deviation > 0 && $deviationSMA2 > 0 && $deviationUpperBand > 0 && $deviation > $deviationUpperBand &&
+            $deviationSMA2 > $deviationUpperBand) {
+
+            $logger->info("Change state", [
+                'time'               => $dataRow->time,
+                'state'              => STATE_DEVIATION_PLUS,
+                'deviation'          => $deviation,
+                'deviationSMA2'      => $deviationSMA2,
+                'deviationUpperBand' => $deviationUpperBand,
+            ]);
+
+            $state = STATE_DEVIATION_PLUS;
+
+            array_push($slice->verticalLines, [
+                'color' => 'red',
+                'value' => $dataRow->time->getTimestamp(),
+            ]);
+
+            $firstAccount->short($firstPair->close, $firstPairFee);
+            $secondAccount->long($secondPair->close, $secondPairFee);
+        }
+    }
+    // *** End draw lines ***
 
     // *** Begin finalize iteration ***
     $generator->next();
@@ -324,6 +383,27 @@ while ($generator->valid()) {
     }
     // *** End finalize iteration ***
 }
+
+//
+// Log account stats
+//
+
+$logger->info("First account", [
+    'currency' => $firstAccount->getCurrency(),
+    'asset'    => $firstAccount->getAsset(),
+    'fee'      => $firstAccount->getFee(),
+    'trades'   => $firstAccount->getTrades(),
+]);
+$logger->info("Second account", [
+    'currency' => $secondAccount->getCurrency(),
+    'asset'    => $secondAccount->getAsset(),
+    'fee'      => $secondAccount->getFee(),
+    'trades'   => $secondAccount->getTrades(),
+]);
+$logger->info("Summary", [
+    'deposit'  => $firstAccount->getDeposit($firstPair->close) + $secondAccount->getDeposit($secondPair->close),
+    'trades'   => $firstAccount->getTrades() + $secondAccount->getTrades(),
+]);
 
 //
 // Print time slice
