@@ -55,7 +55,10 @@ $cmd->option('to')->describedAs('Time UTC')->default(new DateTime('now', new Dat
     return new DateTime($value, new DateTimeZone('UTC'));
 });
 $cmd->option('period-sma-ratio')->describedAs('Period for SMA(pairs ratio) in minutes')->default(DEFAULT_PERIOD_SMA_RATIO)->must(function($value) {
-    return is_integer($value) && $value > 1 && $value <= 100000;
+    return $value > 1 && $value <= 100000;
+});
+$cmd->option('period-bbands')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_PERIOD_BANDS)->must(function($value) {
+    return $value > 1 && $value <= 100000;
 });
 // TODO: Использовать эти значения.
 $cmd->option('first-fee')->describedAs('First pair trade fee')->default(0)->must(function($value) {
@@ -64,7 +67,6 @@ $cmd->option('first-fee')->describedAs('First pair trade fee')->default(0)->must
 $cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0)->must(function($value) {
     return is_double($value);
 });
-$cmd->option('period-bbands')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_PERIOD_BANDS);
 
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
@@ -79,14 +81,14 @@ $to = $cmd['to'];
 $periodRatioSMA = intval($cmd['period-sma-ratio']/$batchSize);
 $cacheSizeRatio = $periodRatioSMA;
 $cacheSizeRatioTail = $periodRatioSMA - 1;
+/** @var integer $bBandsPeriod */
+$bBandsPeriod = intval($cmd['period-bbands']);
+$deviationsCacheSize = $bBandsPeriod;
 // TODO: Использовать эти значения.
 /** @var double $firstPairFee */
 $firstPairFee = doubleval($cmd['first-fee']);
 /** @var double $secondPairFee */
 $secondPairFee = doubleval($cmd['second-fee']);
-/** @var integer $bbandsPeriod */
-$bbandsPeriod = intval($cmd['period-bbands']);
-$deviationsCacheSize = $bbandsPeriod;
 
 //
 // Init logging
@@ -228,13 +230,20 @@ while ($generator->valid()) {
     while (sizeof($deviations) > $deviationsCacheSize) {
         array_shift($deviations);
     }
+    /** @var float $deviationSMA2 */
+    $deviationSMA2 = 0;
+    if (sizeof($deviations) > 1) {
+        $deviationSMA2 = array_sum(array_slice($deviations, -2))/2;
+    }
+
     $logger->info("Stats", [
-        'ratio'     => $ratio,
-        'ratioSMA'  => $ratioSMA,
-        'sigma'     => $sigma,
-        'deviation' => $deviation,
+        'ratio'          => $ratio,
+        'ratioSMA'       => $ratioSMA,
+        'sigma'          => $sigma,
+        'deviation'      => $deviation,
+        'SMA2 deviation' => $deviationSMA2,
     ]);
-    // *** End calculate sigma, deviation and SMA(ratio) ***
+    // *** End calculate sigma, deviation, SMA2(deviation) and SMA(ratio) ***
 
     // *** Begin check time range ***
     if ($dataRow->time->getTimestamp() < $from->getTimestamp()) {
@@ -246,8 +255,22 @@ while ($generator->valid()) {
     }
     // *** End check time range ***
 
+    // Если данных о расхождении в кеше не достаточно - ждем
+    if (sizeof($deviations) < $deviationsCacheSize) {
+        $generator->next();
+        continue;
+    }
+
     // *** Begin calculate Bollinger Bands
-    $bbands = trader_bbands($deviations, $bbandsPeriod, 1, 1, TRADER_MA_TYPE_EMA);
+    /** @var float[][]|false $bBands */
+    $bBands = trader_bbands($deviations, $bBandsPeriod, 1, 1, TRADER_MA_TYPE_EMA);
+    $bBands[0] = array_values($bBands[0]);
+    $bBands[2] = array_values($bBands[2]);
+
+    /** @var float $deviationLowerBand */
+    $deviationLowerBand = $bBands[0][sizeof($bBands[0])-1];
+    /** @var float $deviationUpperBand */
+    $deviationUpperBand = $bBands[2][sizeof($bBands[2])-1];
     // *** End calculate Bollinger Bands
 
     // *** Begin create charts ***
@@ -263,24 +286,18 @@ while ($generator->valid()) {
         $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION],
         new ChartPoint($dataRow->time->getTimestamp()*1000, $deviation)
     );
-    if (is_array($bbands)) {
-        // Bollinger Bands
-        $bbands[0] = array_values($bbands[0]);
-        array_push(
-            $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_LOWER_BAND],
-            new ChartPoint($dataRow->time->getTimestamp()*1000, $bbands[0][sizeof($bbands[0])-1])
-        );
-        $bbands[1] = array_values($bbands[1]);
-        array_push(
-            $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_SMA],
-            new ChartPoint($dataRow->time->getTimestamp()*1000, $bbands[1][sizeof($bbands[1])-1])
-        );
-        $bbands[2] = array_values($bbands[2]);
-        array_push(
-            $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_UPPER_BAND],
-            new ChartPoint($dataRow->time->getTimestamp()*1000, $bbands[2][sizeof($bbands[2])-1])
-        );
-    }
+    array_push(
+        $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_LOWER_BAND],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $deviationLowerBand)
+    );
+    array_push(
+        $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_SMA],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $deviationSMA2)
+    );
+    array_push(
+        $slice->charts[CHART_DEVIATION]->series[CHART_DEVIATION_SERIE_DEVIATION_UPPER_BAND],
+        new ChartPoint($dataRow->time->getTimestamp()*1000, $deviationUpperBand)
+    );
     array_push(
         $slice->charts[CHART_REAL_PAIRS_DIFF]->series[0],
         new ChartPoint($dataRow->time->getTimestamp()*1000, $firstPair->close-$secondPair->close)
@@ -294,6 +311,10 @@ while ($generator->valid()) {
         new ChartPoint($dataRow->time->getTimestamp()*1000, $sigma)
     );
     // *** Begin create charts ***
+
+    // *** Begin test trade
+    // TODO: Create test trade.
+    // *** End test trade
 
     // *** Begin finalize iteration ***
     $generator->next();
