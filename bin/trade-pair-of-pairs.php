@@ -44,6 +44,9 @@ define("CHART_DEVIATION_SERIE_DEVIATION_UPPER_BAND", 3);
 define("STATE_DEVIATION_PLUS", 0);
 define("STATE_DEVIATION_MINUS", 1);
 
+define("DEPOSIT_ACCOUNT_START_FIRST", 1.0);
+define("DEPOSIT_ACCOUNT_START_SECOND", 1.0);
+
 //
 // Commands
 //
@@ -205,8 +208,8 @@ $deviations = [];
 /** @var integer|null $state */
 $state = null;
 
-$firstAccount = new Account(1.0, 0.0);
-$secondAccount = new Account(1.0, 0.0);
+$firstAccount = new Account(DEPOSIT_ACCOUNT_START_FIRST, 0.0);
+$secondAccount = new Account(DEPOSIT_ACCOUNT_START_SECOND, 0.0);
 
 while ($generator->valid()) {
     // *** Begin prepare ratio caches ***
@@ -400,8 +403,12 @@ $logger->info("Second account", [
     'fee'      => $secondAccount->getFee(),
     'trades'   => $secondAccount->getTrades(),
 ]);
+$start = DEPOSIT_ACCOUNT_START_FIRST + DEPOSIT_ACCOUNT_START_SECOND;
+$deposit = $firstAccount->getDeposit($firstPair->close) + $secondAccount->getDeposit($secondPair->close);
 $logger->info("Summary", [
-    'deposit'  => $firstAccount->getDeposit($firstPair->close) + $secondAccount->getDeposit($secondPair->close),
+    'start'    => $start,
+    'deposit'  => $deposit,
+    '%'        => sprintf("%0.2f%%", (1-$start/$deposit)*100),
     'trades'   => $firstAccount->getTrades() + $secondAccount->getTrades(),
 ]);
 
