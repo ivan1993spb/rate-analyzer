@@ -68,11 +68,11 @@ $cmd->option('period-sma-ratio')->describedAs('Period for SMA(pairs ratio) in mi
 $cmd->option('period-bbands')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_PERIOD_BANDS)->must(function($value) {
     return $value > 1 && $value <= 100000;
 });
-$cmd->option('first-fee')->describedAs('First pair trade fee')->default(0.002)->must(function($value) {
-    return is_double($value);
+$cmd->option('first-fee')->describedAs('First pair trade fee')->default(0.002)->cast(function($value) {
+    return doubleval($value);
 });
-$cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0.002)->must(function($value) {
-    return is_double($value);
+$cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0.002)->cast(function($value) {
+    return doubleval($value);
 });
 
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
