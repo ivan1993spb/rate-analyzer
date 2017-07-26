@@ -14,6 +14,7 @@ use Commando\Command;
 use Monolog\Logger;
 
 ini_set("trader.real_precision", 10);
+ini_set('memory_limit', '-1');
 
 //
 // Constants
@@ -22,6 +23,8 @@ ini_set("trader.real_precision", 10);
 define("DEFAULT_PERIOD_SMA_RATIO", 60*24*7);
 define("DEFAULT_PERIOD_BANDS", 5);
 
+define("DEFAULT_FEE_FIRST", 0.002);
+define("DEFAULT_FEE_SECOND", 0.002);
 
 define("CANDLE_TRADE_PAIR_FIRST", 0);
 define("CANDLE_TRADE_PAIR_SECOND", 1);
@@ -68,10 +71,10 @@ $cmd->option('period-sma-ratio')->describedAs('Period for SMA(pairs ratio) in mi
 $cmd->option('period-bbands')->describedAs('Bollinger Bands period for deviation')->default(DEFAULT_PERIOD_BANDS)->must(function($value) {
     return $value > 1 && $value <= 100000;
 });
-$cmd->option('first-fee')->describedAs('First pair trade fee')->default(0.002)->cast(function($value) {
+$cmd->option('first-fee')->describedAs('First pair trade fee')->default(DEFAULT_FEE_FIRST)->cast(function($value) {
     return doubleval($value);
 });
-$cmd->option('second-fee')->describedAs('Second pair trade fee')->default(0.002)->cast(function($value) {
+$cmd->option('second-fee')->describedAs('Second pair trade fee')->default(DEFAULT_FEE_SECOND)->cast(function($value) {
     return doubleval($value);
 });
 
@@ -184,6 +187,10 @@ for ($i = 0; $i < $cacheSizeRatioTail+$cacheSizeRatio; $i++) {
 $dataRow = $generator->current();
 $firstPair = $dataRow->candles[CANDLE_TRADE_PAIR_FIRST];
 $secondPair = $dataRow->candles[CANDLE_TRADE_PAIR_SECOND];
+
+// Начальные значения цен криптовалют
+$startPriceFirst = $firstPair->close;
+$startPriceSecond = $secondPair->close;
 
 $slice = new ExchangeStateSlice;
 $slice->charts[CHART_CLOSE_PRICE_FIRST_PAIR] = new Chart(sprintf("Close price %s", $firstPair->label), [$firstPair->label]);
@@ -392,24 +399,26 @@ while ($generator->valid()) {
 //
 
 $logger->info("First account", [
-    'currency' => $firstAccount->getCurrency(),
-    'asset'    => $firstAccount->getAsset(),
-    'fee'      => $firstAccount->getFee(),
-    'trades'   => $firstAccount->getTrades(),
+    'currency'    => $firstAccount->getCurrency(),
+    'asset'       => $firstAccount->getAsset(),
+    'fee'         => $firstAccount->getFee(),
+    'trades'      => $firstAccount->getTrades(),
+    'rate growth' => sprintf("%0.2f%%", (1-$startPriceFirst/$firstPair->close)*100),
 ]);
 $logger->info("Second account", [
-    'currency' => $secondAccount->getCurrency(),
-    'asset'    => $secondAccount->getAsset(),
-    'fee'      => $secondAccount->getFee(),
-    'trades'   => $secondAccount->getTrades(),
+    'currency'    => $secondAccount->getCurrency(),
+    'asset'       => $secondAccount->getAsset(),
+    'fee'         => $secondAccount->getFee(),
+    'trades'      => $secondAccount->getTrades(),
+    'rate growth' => sprintf("%0.2f%%", (1-$startPriceSecond/$secondPair->close)*100),
 ]);
 $start = DEPOSIT_ACCOUNT_START_FIRST + DEPOSIT_ACCOUNT_START_SECOND;
 $deposit = $firstAccount->getDeposit($firstPair->close) + $secondAccount->getDeposit($secondPair->close);
 $logger->info("Summary", [
-    'start'    => $start,
-    'deposit'  => $deposit,
-    '%'        => sprintf("%0.2f%%", (1-$start/$deposit)*100),
-    'trades'   => $firstAccount->getTrades() + $secondAccount->getTrades(),
+    'start'   => $start,
+    'deposit' => $deposit,
+    'growth'  => sprintf("%0.2f%%", (1-$start/$deposit)*100),
+    'trades'  => $firstAccount->getTrades() + $secondAccount->getTrades(),
 ]);
 
 //
