@@ -398,27 +398,25 @@ while ($generator->valid()) {
 // Log account stats
 //
 
+$resultDepositFirstAccount = $firstAccount->getDeposit($firstPair->close);
 $logger->info("First account", [
-    'currency'    => $firstAccount->getCurrency(),
-    'asset'       => $firstAccount->getAsset(),
-    'fee'         => $firstAccount->getFee(),
-    'trades'      => $firstAccount->getTrades(),
-    'rate growth' => sprintf("%0.2f%%", (1-$startPriceFirst/$firstPair->close)*100),
+    'currency'       => $firstAccount->getCurrency(),
+    'asset'          => $firstAccount->getAsset(),
+    'trades'         => $firstAccount->getTrades(),
+    'rate_growth'    => sprintf("%0.2f%%", (1-$startPriceFirst/$firstPair->close)*100),
+    'start_deposit'  => DEPOSIT_ACCOUNT_START_FIRST,
+    'result_deposit' => $resultDepositFirstAccount,
+    'deposit_growth' => sprintf("%0.2f%%", (1-DEPOSIT_ACCOUNT_START_FIRST/$resultDepositFirstAccount)*100),
 ]);
+$resultDepositSecondAccount = $secondAccount->getDeposit($secondPair->close);
 $logger->info("Second account", [
-    'currency'    => $secondAccount->getCurrency(),
-    'asset'       => $secondAccount->getAsset(),
-    'fee'         => $secondAccount->getFee(),
-    'trades'      => $secondAccount->getTrades(),
-    'rate growth' => sprintf("%0.2f%%", (1-$startPriceSecond/$secondPair->close)*100),
-]);
-$start = DEPOSIT_ACCOUNT_START_FIRST + DEPOSIT_ACCOUNT_START_SECOND;
-$deposit = $firstAccount->getDeposit($firstPair->close) + $secondAccount->getDeposit($secondPair->close);
-$logger->info("Summary", [
-    'start'   => $start,
-    'deposit' => $deposit,
-    'growth'  => sprintf("%0.2f%%", (1-$start/$deposit)*100),
-    'trades'  => $firstAccount->getTrades() + $secondAccount->getTrades(),
+    'currency'       => $secondAccount->getCurrency(),
+    'asset'          => $secondAccount->getAsset(),
+    'trades'         => $secondAccount->getTrades(),
+    'rate_growth'    => sprintf("%0.2f%%", (1-$startPriceSecond/$secondPair->close)*100),
+    'start_deposit'  => DEPOSIT_ACCOUNT_START_SECOND,
+    'result_deposit' => $secondAccount->getDeposit($secondPair->close),
+    'deposit_growth' => sprintf("%0.2f%%", (1-DEPOSIT_ACCOUNT_START_SECOND/$resultDepositSecondAccount)*100),
 ]);
 
 //

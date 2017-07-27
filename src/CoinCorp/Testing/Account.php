@@ -20,11 +20,6 @@ class Account
     private $asset = 0.0;
 
     /**
-     * @var float
-     */
-    private $fee = 0.0;
-
-    /**
      * @var integer
      */
     private $trades = 0;
@@ -48,8 +43,7 @@ class Account
     public function long($currentPrice, $fee)
     {
         if ($this->currency > 0) {
-            $this->asset += $this->currency / $currentPrice;
-            $this->fee += $this->currency * $fee;
+            $this->asset += $this->currency/$currentPrice - $this->currency*$fee/$currentPrice;
             $this->currency = 0;
             $this->trades += 1;
         }
@@ -62,8 +56,7 @@ class Account
     public function short($currentPrice, $fee)
     {
         if ($this->asset > 0) {
-            $this->currency += $this->asset * $currentPrice;
-            $this->fee += $this->asset * $currentPrice * $fee;
+            $this->currency += $this->asset*$currentPrice - $this->asset*$currentPrice*$fee;
             $this->asset = 0;
             $this->trades += 1;
         }
@@ -86,14 +79,6 @@ class Account
     }
 
     /**
-     * @return float
-     */
-    public function getFee()
-    {
-        return $this->fee;
-    }
-
-    /**
      * @return integer
      */
     public function getTrades()
@@ -107,6 +92,6 @@ class Account
      */
     public function getDeposit($currentPrice)
     {
-        return $this->currency + $this->asset*$currentPrice - $this->fee;
+        return $this->currency + $this->asset*$currentPrice;
     }
 }
