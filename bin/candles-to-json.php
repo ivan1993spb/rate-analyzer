@@ -21,7 +21,7 @@ define("CHART_SERIE_PRICE", 0);
 define("CHART_SERIE_MA", 1);
 
 $cmd = new Command();
-$cmd->setHelp('Generates JSON file with last candles');
+$cmd->setHelp('Generates JSON file with candles range');
 
 $cmd->option('s')->aka('sources')->describedAs('Config file with list of sources')->required()->file();
 $cmd->option('o')->aka('output')->describedAs('Output JSON file name')->default('php://stdout');
