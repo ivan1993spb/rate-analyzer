@@ -13,12 +13,12 @@ You need docker
 ### Install short commands
 
 ```bash
-alias cc-candles-to-json="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/candles-to-json.php"
-alias cc-correlation="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/correlation.php"
-alias cc-last-candles="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/last-candles.php"
-alias cc-latest-prices="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/print-latest-prices.php"
-alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/scan-candle-emitter.php"
-alias cc-stats-trade-pairs="docker run --rm -v \$(pwd):/workdir -w /workdir registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/trade-pair-of-pairs.php"
+alias cc-candles-to-json="docker run --rm -v \$(pwd):\$(pwd) -w \$(pwd) registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/candles-to-json.php"
+alias cc-correlation="docker run --rm -v \$(pwd):\$(pwd) -w \$(pwd) registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/correlation.php"
+alias cc-last-candles="docker run --rm -v \$(pwd):\$(pwd) -w \$(pwd) registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/last-candles.php"
+alias cc-latest-prices="docker run --rm -v \$(pwd):\$(pwd) -w \$(pwd) registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/print-latest-prices.php"
+alias cc-scan-candle-emitter="docker run --rm -v \$(pwd):\$(pwd) -w \$(pwd) registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/scan-candle-emitter.php"
+alias cc-stats-trade-pairs="docker run --rm -v \$(pwd):\$(pwd) -w \$(pwd) registry.gitlab.com/coincorp/rate-analyzer:latest /app/bin/trade-pair-of-pairs.php"
 ```
 
 ### Command descriptions
