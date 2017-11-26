@@ -77,6 +77,7 @@ if ($flagPrintOnlyGrowingUpPairs) {
 echo "\n";
 echo "# Last pairs candles stats\n";
 echo "\n";
+# TODO Print message that pairs are filtered
 
 foreach ($sources as $emitter) {
     if ($emitter instanceof CandleEmitterInterface) {
