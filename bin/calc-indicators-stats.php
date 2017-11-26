@@ -55,6 +55,7 @@ $cmd->option('from')->describedAs('Time UTC')->default(new DateTime("0001-01-01"
 $cmd->option('to')->describedAs('Time UTC')->default(new DateTime('now', new DateTimeZone('UTC')))->cast(function($value) {
     return new DateTime($value, new DateTimeZone('UTC'));
 });
+$cmd->option('up')->describedAs('Print only growing up pairs')->default(false)->boolean();
 
 /** @var \DateTime $from */
 $from = $cmd['from'];
@@ -64,8 +65,14 @@ $to = $cmd['to'];
 $batchSize = intval($cmd['batch-size']);
 /** @var \CoinCorp\RateAnalyzer\CandleEmitterInterface[] $sources */
 $sources = require $cmd['sources'];
+/** @var boolean $flagPrintOnlyGrowingUpPairs */
+$flagPrintOnlyGrowingUpPairs = $cmd['up'];
 
 $logger = new Logger('logger');
+
+if ($flagPrintOnlyGrowingUpPairs) {
+    $logger->info("Filtering pairs that don't growing up is enabled");
+}
 
 echo "\n";
 echo "# Last pairs candles stats\n";
@@ -76,11 +83,6 @@ foreach ($sources as $emitter) {
         if ($cmd['batch-size'] > 1) {
             $emitter = new CandleBatcher($emitter, (integer)$cmd['batch-size']);
         }
-
-        echo "## ", $emitter->getName(), "\n";
-        echo "\n";
-        echo "Candle size = ", $emitter->getCandleSize(), " seconds\n";
-        echo "\n";
 
         /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
         $candles = [];
@@ -156,9 +158,25 @@ foreach ($sources as $emitter) {
                 continue;
             }
 
+            // Filter pairs
+            if ($flagPrintOnlyGrowingUpPairs) {
+                // Если пара не растет, игнорируем
+                if (!($SMAShortValue > $SMAMediumValue && $SMAMediumValue > $SMALongValue)) {
+                    $logger->info("Filter pair", ['emitter' => $emitter->getName()]);
+                    continue;
+                }
+            }
+
+            echo "## ", $emitter->getName(), "\n";
+            echo "\n";
+            echo "Candle size = ", $emitter->getCandleSize(), " seconds\n";
+            echo "\n";
+
             printf("Last candle: date `%s`, close = `%f`, volume = `%f`, trades = `%d`\n", $candle->start->format('r'), $candle->close,
                 $candle->volume, $candle->trades);
+
             echo PHP_EOL;
+
             echo "```\n";
             printf("ADXShort(%d) = ", PERIOD_ADX_SHORT);
             var_dump($ADXShortValue);
