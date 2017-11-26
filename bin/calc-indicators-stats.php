@@ -120,24 +120,60 @@ foreach ($sources as $emitter) {
 
         $candle = lastOrFalse($candles);
         if ($candle) {
+            $ADXShortValue = lastOrFalse($ADXShort);
+            if ($ADXShortValue === false) {
+                $logger->warn("Cannot get ADXShort value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+            $ADXLongValue = lastOrFalse($ADXLong);
+            if ($ADXLongValue === false) {
+                $logger->warn("Cannot get ADXLong value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+            $ATRShortValue = lastOrFalse($ATRShort);
+            if ($ATRShortValue === false) {
+                $logger->warn("Cannot get ATRShort value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+            $ATRLongValue = lastOrFalse($ATRLong);
+            if ($ATRLongValue === false) {
+                $logger->warn("Cannot get ATRLong value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+            $SMAShortValue = lastOrFalse($SMAShort);
+            if ($SMAShortValue === false) {
+                $logger->warn("Cannot get SMAShort value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+            $SMAMediumValue = lastOrFalse($SMAMedium);
+            if ($SMAMediumValue === false) {
+                $logger->warn("Cannot get SMAMedium value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+            $SMALongValue = lastOrFalse($SMALong);
+            if ($SMALongValue === false) {
+                $logger->warn("Cannot get SMALong value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
+
             printf("Last candle: date `%s`, close = `%f`, volume = `%f`, trades = `%d`\n", $candle->start->format('r'), $candle->close,
                 $candle->volume, $candle->trades);
             echo PHP_EOL;
             echo "```\n";
             printf("ADXShort(%d) = ", PERIOD_ADX_SHORT);
-            var_dump(lastOrFalse($ADXShort));
+            var_dump($ADXShortValue);
             printf("ADXLong(%d) = ", PERIOD_ADX_LONG);
-            var_dump(lastOrFalse($ADXLong));
+            var_dump($ADXLongValue);
             printf("ATRShort(%d) = ", PERIOD_ATR_SHORT);
-            var_dump(lastOrFalse($ATRShort));
+            var_dump($ATRShortValue);
             printf("ATRLong(%d) = ", PERIOD_ATR_LONG);
-            var_dump(lastOrFalse($ATRLong));
+            var_dump($ATRLongValue);
             printf("SMAShort(%d) = ", PERIOD_SMA_SHORT);
-            var_dump(lastOrFalse($SMAShort));
+            var_dump($SMAShortValue);
             printf("SMAMedium(%d) = ", PERIOD_SMA_MEDIUM);
-            var_dump(lastOrFalse($SMAMedium));
+            var_dump($SMAMediumValue);
             printf("SMALong(%d) = ", PERIOD_SMA_LONG);
-            var_dump(lastOrFalse($SMALong));
+            var_dump($SMALongValue);
             echo "```\n";
         } else {
             $logger->warn("Cannot gen last candle", ['emitter' => $emitter->getName()]);
