@@ -70,14 +70,15 @@ $flagPrintOnlyGrowingUpPairs = $cmd['up'];
 
 $logger = new Logger('logger');
 
-if ($flagPrintOnlyGrowingUpPairs) {
-    $logger->info("Filtering pairs that don't growing up is enabled");
-}
-
 echo "\n";
 echo "# Last pairs candles stats\n";
 echo "\n";
-# TODO Print message that pairs are filtered
+
+if ($flagPrintOnlyGrowingUpPairs) {
+    $logger->info("Filtering pairs that don't growing up is enabled");
+    echo "Only growing up pairs\n";
+    echo "\n";
+}
 
 foreach ($sources as $emitter) {
     if ($emitter instanceof CandleEmitterInterface) {
