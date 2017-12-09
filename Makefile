@@ -4,7 +4,7 @@ install:
 
 	@docker run --rm -v $(PWD):/app -w /app composer/composer install
 
-build: rmi
+build:
 
 	@docker build -t $(IMAGE_NAME) .
 
