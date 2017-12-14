@@ -25,6 +25,8 @@ define("PERIOD_SMA_SHORT", 4);
 define("PERIOD_SMA_MEDIUM", 9);
 define("PERIOD_SMA_LONG", 18);
 
+define("PERIOD_RSI_LONG", 14);
+
 define("CANDLE_CACHE_SIZE", 30);
 
 /**
@@ -96,6 +98,7 @@ foreach ($sources as $emitter) {
         $SMAShort  = [];
         $SMAMedium = [];
         $SMALong   = [];
+        $RSILong   = [];
 
         foreach ($emitter->candles() as $candle) {
             array_push($candles, $candle);
@@ -120,6 +123,7 @@ foreach ($sources as $emitter) {
             $SMAShort  = trader_sma($close, PERIOD_SMA_SHORT);
             $SMAMedium = trader_sma($close, PERIOD_SMA_MEDIUM);
             $SMALong   = trader_sma($close, PERIOD_SMA_LONG);
+            $RSILong   = trader_rsi($close, PERIOD_RSI_LONG);
         }
 
         $candle = lastOrFalse($candles);
@@ -159,6 +163,11 @@ foreach ($sources as $emitter) {
                 $logger->warn("Cannot get SMALong value", ['emitter' => $emitter->getName()]);
                 continue;
             }
+            $RSILongValue = lastOrFalse($RSILong);
+            if ($RSILongValue === false) {
+                $logger->warn("Cannot get RSILong value", ['emitter' => $emitter->getName()]);
+                continue;
+            }
 
             // Filter pairs
             if ($flagPrintOnlyGrowingUpPairs) {
@@ -168,6 +177,8 @@ foreach ($sources as $emitter) {
                     continue;
                 }
             }
+
+            $logger->info("Create pair", ['emitter' => $emitter->getName()]);
 
             echo "## ", $emitter->getName(), "\n";
             echo "\n";
@@ -194,6 +205,8 @@ foreach ($sources as $emitter) {
             var_dump($SMAMediumValue);
             printf("SMALong(%d) = ", PERIOD_SMA_LONG);
             var_dump($SMALongValue);
+            printf("RSILong(%d) = ", PERIOD_RSI_LONG);
+            var_dump($RSILongValue);
             echo "```\n";
         } else {
             $logger->warn("Cannot gen last candle", ['emitter' => $emitter->getName()]);
