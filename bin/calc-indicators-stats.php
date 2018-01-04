@@ -84,8 +84,8 @@ if ($flagPrintOnlyGrowingUpPairs) {
 
 foreach ($sources as $emitter) {
     if ($emitter instanceof CandleEmitterInterface) {
-        if ($cmd['batch-size'] > 1) {
-            $emitter = new CandleBatcher($emitter, (integer)$cmd['batch-size']);
+        if ($batchSize > 1) {
+            $emitter = new CandleBatcher($emitter, $batchSize);
         }
 
         /** @var \CoinCorp\RateAnalyzer\Candle[] $candles */
