@@ -9,6 +9,7 @@
         }
     ],
     "bin": [
+        "bin/calc-indicators-stats.php",
         "bin/candles-to-json.php",
         "bin/correlation.php",
         "bin/last-candles.php",
