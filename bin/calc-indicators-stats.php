@@ -199,15 +199,30 @@ foreach ($sources as $emitter) {
             var_dump($ATRShortValue);
             printf("ATRLong(%d) = ", PERIOD_ATR_LONG);
             var_dump($ATRLongValue);
+            echo PHP_EOL;
+
             printf("SMAShort(%d) = ", PERIOD_SMA_SHORT);
             var_dump($SMAShortValue);
             printf("SMAMedium(%d) = ", PERIOD_SMA_MEDIUM);
             var_dump($SMAMediumValue);
             printf("SMALong(%d) = ", PERIOD_SMA_LONG);
             var_dump($SMALongValue);
+            echo PHP_EOL;
+
             printf("RSILong(%d) = ", PERIOD_RSI_LONG);
             var_dump($RSILongValue);
             echo "```\n";
+
+            echo PHP_EOL;
+
+            echo "Volatility:", PHP_EOL;
+            echo PHP_EOL;
+
+            echo "```\n";
+            printf("ATRShort(%d)/SMAShort(%d) = %0.2f%%\n", PERIOD_ATR_SHORT, PERIOD_SMA_SHORT, $ATRShortValue/$SMAShortValue*100);
+            printf("ATRLong(%d)/SMALong(%d) = %0.2f%%\n", PERIOD_ATR_LONG, PERIOD_SMA_LONG, $ATRLongValue/$SMALongValue*100);
+            echo "```\n";
+
         } else {
             $logger->warn("Cannot gen last candle", ['emitter' => $emitter->getName()]);
         }
